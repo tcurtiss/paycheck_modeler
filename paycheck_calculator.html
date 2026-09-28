@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paycheck Modeling Calculator</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --panel-2: #fbfbfa;
+    --border: #e0ddd6;
+    --text: #23211d;
+    --text-dim: #6b6759;
+    --accent: #8a5a2b;
+    --accent-2: #6d7a4f;
+    --blue: #e8f0fa;
+    --blue-border: #b9cfe8;
+    --yellow: #fdf6e0;
+    --yellow-border: #e6d59a;
+    --neg: #a33f3f;
+    --pos: #4b6b3d;
+    --row-alt: #f5f4f0;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #4a3aa7;
+    color-scheme: light dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1b19;
+      --panel: #242320;
+      --panel-2: #2a2926;
+      --border: #3a382f;
+      --text: #eceadf;
+      --text-dim: #a6a191;
+      --accent: #d3944f;
+      --accent-2: #a3b17e;
+      --blue: #22303f;
+      --blue-border: #35506b;
+      --yellow: #3a331a;
+      --yellow-border: #5c4f27;
+      --row-alt: #201f1c;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+      --series-7: #9085e9;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1b19;
+    --panel: #242320;
+    --panel-2: #2a2926;
+    --border: #3a382f;
+    --text: #eceadf;
+    --text-dim: #a6a191;
+    --accent: #d3944f;
+    --accent-2: #a3b17e;
+    --blue: #22303f;
+    --blue-border: #35506b;
+    --yellow: #3a331a;
+    --yellow-border: #5c4f27;
+    --row-alt: #201f1c;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 20px 16px 60px;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 0 0 10px; color: var(--accent); }
+  h3 { font-size: 12.5px; margin: 16px 0 8px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+  .subtitle { color: var(--text-dim); margin: 0 0 18px; font-size: 13px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--text-dim); margin-bottom:16px; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .swatch { width:12px; height:12px; border-radius:2px; display:inline-block; }
+  .sw-blue { background: var(--blue); border:1px solid var(--blue-border); }
+  .sw-yellow { background: var(--yellow); border:1px solid var(--yellow-border); }
+
+  .layout { display:grid; grid-template-columns: minmax(300px,440px) 1fr; gap:20px; align-items:start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .panel-2 { background: var(--panel-2); }
+
+  fieldset { border:1px solid var(--border); border-radius:8px; padding:10px 12px 12px; margin:0 0 12px; }
+  legend { font-size:12px; font-weight:600; color: var(--text-dim); padding:0 4px; }
+
+  .field { display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .field label { flex: 1 1 auto; font-size:12.5px; }
+  .field .ctrl { flex: 0 0 auto; width: 150px; }
+  .field.wide .ctrl { width: 180px; }
+  input, select {
+    width:100%; padding:5px 7px; border:1px solid var(--border); border-radius:6px;
+    background: var(--blue); color: var(--text); font-size:13px;
+  }
+  input:focus, select:focus { outline:2px solid var(--accent-2); outline-offset:1px; }
+  .cell-yellow input, .cell-yellow select { background: var(--yellow); border-color: var(--yellow-border); }
+  .pct-wrap { position:relative; }
+  .pct-wrap input { padding-right:20px; }
+  .pct-wrap::after { content:"%"; position:absolute; right:8px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:12px; pointer-events:none; }
+  .hint { font-size:11px; color:var(--text-dim); margin: -2px 0 8px; }
+
+  table.mini { width:100%; border-collapse: collapse; font-size:12.5px; }
+  table.mini th, table.mini td { padding:4px 6px; text-align:right; }
+  table.mini th:first-child, table.mini td:first-child { text-align:left; }
+  table.mini input { padding:3px 5px; font-size:12px; }
+
+  details > summary { cursor:pointer; font-weight:600; padding:6px 0; color:var(--accent); list-style: none; }
+  details > summary::-webkit-details-marker { display:none; }
+  details > summary::before { content:"▸ "; }
+  details[open] > summary::before { content:"▾ "; }
+
+  .btnrow { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  button {
+    padding:7px 12px; border-radius:6px; border:1px solid var(--border); background: var(--panel-2);
+    color: var(--text); font-size:12.5px; cursor:pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color:#fff; }
+
+  .summary-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px,320px)); gap:14px; }
+  .card h4 { font-size:11.5px; margin:14px 0 4px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; }
+  .card h4:first-of-type { margin-top:0; }
+  .card .subsection + .subsection { border-top:1px solid var(--border); padding-top:2px; }
+  .card { background: var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .card h3 { margin-top:0; }
+  .row { display:flex; justify-content:space-between; padding:3px 0; font-size:13px; gap:10px; }
+  .row .l { color: var(--text-dim); }
+  .row .v { font-weight:600; white-space:nowrap; }
+  .row.total { border-top:1px solid var(--border); margin-top:4px; padding-top:6px; font-weight:700; }
+  .row.indent .l { padding-left:12px; }
+  .neg { color: var(--neg); }
+  .pos { color: var(--pos); }
+
+  .col-toggle { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); margin:0 0 10px; cursor:pointer; }
+  .col-toggle input { width:auto; }
+  .table-scroll { overflow-x:auto; border:1px solid var(--border); border-radius:8px; }
+  table.detail { border-collapse: collapse; font-size:11.5px; width:100%; min-width:1600px; }
+  table.detail th, table.detail td { padding:5px 7px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.detail th:first-child, table.detail td:first-child,
+  table.detail th:nth-child(2), table.detail td:nth-child(2) { text-align:left; }
+  table.detail thead th { background: var(--panel-2); border-bottom:2px solid var(--border); }
+  table.detail thead tr:last-child th { position:sticky; top:0; z-index:1; }
+  table.detail th.grp-head { text-align:center; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-dim); }
+  table.detail th.grp-head.grp-1 { background: var(--row-alt); }
+  table.detail th.grp-end, table.detail td.grp-end { border-right:2px solid var(--border); }
+  table.detail tbody tr:nth-child(even) { background: var(--row-alt); }
+  table.detail tfoot td { font-weight:700; border-top:2px solid var(--border); background: var(--panel-2); }
+  table.detail td.bonus-row, table.detail tr.bonus-row td { background: var(--yellow); }
+
+  .chart-scroll { overflow-x:auto; }
+  .chart-legend { display:flex; flex-wrap:wrap; gap:14px 18px; margin-bottom:10px; font-size:12px; color:var(--text); }
+  .chart-legend .key { display:inline-flex; align-items:center; gap:6px; }
+  .chart-legend .swatch { width:11px; height:11px; border-radius:2px; flex:0 0 auto; }
+  #accum-chart-wrap { position:relative; min-width:900px; }
+  #accum-chart text { fill: var(--text-dim); font-size:10.5px; }
+  #accum-chart .axis-line { stroke: var(--border); stroke-width:1; }
+  #accum-chart .gridline { stroke: var(--border); stroke-width:1; }
+  #accum-chart .total-label { fill: var(--text); font-size:11.5px; font-weight:700; }
+  .chart-hit:hover, .chart-hit:focus { outline:none; }
+  .chart-hit rect.hover-outline { display:none; }
+  .chart-hit:hover rect.hover-outline, .chart-hit:focus rect.hover-outline { display:block; }
+  .chart-tooltip {
+    position:absolute; pointer-events:none; background: var(--panel-2); border:1px solid var(--border);
+    border-radius:6px; padding:8px 10px; font-size:11.5px; box-shadow:0 4px 12px rgba(0,0,0,.15);
+    white-space:nowrap; z-index:5; opacity:0; transition:opacity .08s;
+  }
+  .chart-tooltip.visible { opacity:1; }
+  .chart-tooltip .tt-title { font-weight:700; margin-bottom:4px; color:var(--text); }
+  .chart-tooltip .tt-row { display:flex; align-items:center; gap:6px; justify-content:space-between; }
+  .chart-tooltip .tt-key { display:inline-flex; align-items:center; gap:5px; color:var(--text-dim); }
+  .chart-tooltip .tt-key .line { width:9px; height:2px; border-radius:1px; flex:0 0 auto; }
+  .chart-tooltip .tt-maxed { font-style:normal; font-size:10px; color:var(--text-dim); border:1px solid var(--border); border-radius:3px; padding:0 4px; margin-left:2px; }
+  .chart-tooltip .tt-val { font-weight:600; color:var(--text); margin-left:10px; font-variant-numeric: tabular-nums; }
+  .chart-tooltip .tt-total { border-top:1px solid var(--border); margin-top:4px; padding-top:4px; font-weight:700; display:flex; justify-content:space-between; gap:10px; }
+
+  footer { color: var(--text-dim); font-size:11.5px; margin-top:30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Paycheck Modeling Calculator</h1>
+  <p class="subtitle">A standalone, in-browser model of a full-year paycheck: 401(k) (regular + catch-up + after-tax), employer match, NQDC, HSA, ESPP, quarterly RSU vesting, a year-end bonus, and federal/FICA/state withholding — all computed client-side. Nothing here is sent anywhere.</p>
+  <div class="legend">
+    <span><span class="swatch sw-blue"></span> enter your own info</span>
+    <span><span class="swatch sw-yellow"></span> IRS / reference figures — edit under "Tax Year Settings" if a figure changes</span>
+  </div>
+
+  <div class="layout">
+    <!-- ============ INPUTS COLUMN ============ -->
+    <div>
+      <div class="panel">
+        <h2>Employee &amp; Pay</h2>
+        <fieldset>
+          <legend>Basics</legend>
+          <div class="field"><label>Filing status</label><div class="ctrl cell-blue">
+            <select id="in-filingStatus">
+              <option>Single</option>
+              <option>Married Filing Jointly</option>
+              <option>Head of Household</option>
+              <option>Married Filing Separately</option>
+            </select>
+          </div></div>
+          <div class="field"><label>State + local tax rate</label><div class="ctrl cell-blue pct-wrap"><input id="in-stateTaxRatePct" type="number" step="0.01"></div></div>
+          <div class="field"><label>Annual salary ($)</label><div class="ctrl cell-blue"><input id="in-annualSalary" type="number" step="100"></div></div>
+          <div class="hint">Biweekly pay (26 periods/year) is the only cadence this model supports — each check is dated 14 days after the last.</div>
+          <div class="field"><label>First pay date of the year</label><div class="ctrl cell-blue"><input id="in-firstPayDate" type="date"></div></div>
+          <div class="field"><label>Employee age (as of 12/31)</label><div class="ctrl cell-blue"><input id="in-employeeAge" type="number" step="1" min="0"></div></div>
+          <div class="field"><label>Catch-up must be Roth?</label><div class="ctrl cell-blue">
+            <select id="in-catchupMustBeRoth"><option value="Yes">Yes</option><option value="No">No</option></select>
+          </div></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Form W-4</legend>
+          <div class="field"><label>Additional federal withholding / paycheck</label><div class="ctrl cell-blue"><input id="in-addlFedWithholding" type="number" step="1"></div></div>
+        </fieldset>
+      </div>
+
+      <div class="panel">
+        <h2>Deductions per Paycheck</h2>
+        <fieldset>
+          <legend>Pre-tax</legend>
+          <div class="field"><label>Traditional 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-trad401kPct" type="number" step="0.1"></div></div>
+          <div class="field"><label>Roth 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-roth401kPct" type="number" step="0.1"></div></div>
+          <div class="field"><label>401(k) elective deferral IRS limit ($)</label><div class="ctrl cell-yellow"><input id="in-electiveLimit" type="number" step="50"></div></div>
+          <div class="field"><label>HSA coverage type</label><div class="ctrl cell-blue">
+            <select id="in-hsaCoverage"><option>Self-only</option><option>Family</option></select>
+          </div></div>
+          <div class="field"><label>HSA contribution / paycheck ($)</label><div class="ctrl cell-blue"><input id="in-hsaPerPaycheck" type="number" step="1"></div></div>
+          <div class="field"><label>Employer/wellness HSA contribution (annual, $)</label><div class="ctrl cell-blue"><input id="in-employerHsaAnnual" type="number" step="25"></div></div>
+          <div class="field"><label>Pre-tax health/dental/vision / paycheck ($)</label><div class="ctrl cell-blue"><input id="in-preTaxInsurance" type="number" step="1"></div></div>
+          <div class="hint" id="hsa-limit-hint"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Post-tax</legend>
+          <div class="field"><label>Other post-tax deductions / paycheck ($)</label><div class="ctrl cell-blue"><input id="in-otherPostTax" type="number" step="1"></div></div>
+        </fieldset>
+      </div>
+
+      <div class="panel">
+        <h2>NQDC &amp; Advanced 401(k)</h2>
+        <div class="field"><label>NQDC deferral (% of gross pay)</label><div class="ctrl cell-blue pct-wrap"><input id="in-nqdcPct" type="number" step="0.1"></div></div>
+        <div class="field"><label>401(k) after-tax elected (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-afterTax401kPct" type="number" step="0.1"></div></div>
+        <h3>401(k) overflow handling</h3>
+        <div class="field"><label>Spill excess contributions to after-tax 401(k)?</label><div class="ctrl cell-blue">
+          <select id="in-spillover"><option value="Yes">Yes</option><option value="No">No</option></select>
+        </div></div>
+      </div>
+
+      <div class="panel">
+        <h2>Employer 401(k) Match (Tiered)</h2>
+        <p class="hint">Applies to cumulative Traditional + Roth regular AND catch-up contributions combined, in order.</p>
+        <table class="mini" id="match-table">
+          <thead><tr><th>Bracket</th><th>Width ($)</th><th>Match rate</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="field"><label>Bracket 4 rate (thereafter, up to your limit)</label><div class="ctrl cell-blue pct-wrap"><input id="in-matchRate4" type="number" step="1"></div></div>
+        <div class="hint" id="match-max-hint"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Employee Stock Purchase Plan</h2>
+        <div class="field"><label>ESPP contribution (% of gross)</label><div class="ctrl cell-blue pct-wrap"><input id="in-esppPct" type="number" step="0.1"></div></div>
+        <div class="field"><label>Cap per offering period ($)</label><div class="ctrl cell-blue"><input id="in-esppCap" type="number" step="1"></div></div>
+        <div class="field"><label>Offering period length (months)</label><div class="ctrl cell-blue"><input id="in-esppMonths" type="number" step="1" min="1"></div></div>
+        <div class="field"><label>Offering period start date</label><div class="ctrl cell-blue"><input id="in-esppStart" type="date"></div></div>
+      </div>
+
+      <div class="panel">
+        <h2>Quarterly RSU Vesting Schedule</h2>
+        <p class="hint">Modeled as off-cycle checks with no 401(k)/HSA/NQDC/ESPP deductions, at flat statutory withholding rates.</p>
+        <table class="mini" id="rsu-input-table">
+          <thead><tr><th>Quarter</th><th>Vest value ($)</th><th>Vest date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Year-End Cash Bonus</h2>
+        <p class="hint">Modeled as its own off-cycle check, inserted the day after the 2nd-to-last regular paycheck.</p>
+        <div class="field"><label>Bonus amount ($)</label><div class="ctrl cell-blue"><input id="in-bonusAmount" type="number" step="1"></div></div>
+        <div class="field"><label>Bonus NQDC withholding (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusNqdcPct" type="number" step="1"></div></div>
+        <div class="field"><label>Bonus traditional 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusTradPct" type="number" step="1"></div></div>
+        <div class="field"><label>Bonus Roth 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusRothPct" type="number" step="1"></div></div>
+        <div class="field"><label>Bonus after-tax 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusAfterTaxPct" type="number" step="1"></div></div>
+      </div>
+
+      <details class="panel">
+        <summary>Tax Year Settings (Advanced)</summary>
+        <h3>Federal supplemental wage withholding (RSU / bonus)</h3>
+        <div class="field"><label>Flat rate, up to $1M cumulative</label><div class="ctrl cell-yellow pct-wrap"><input id="in-suppRateUnder1M" type="number" step="1"></div></div>
+        <div class="field"><label>Flat rate, over $1M cumulative</label><div class="ctrl cell-yellow pct-wrap"><input id="in-suppRateOver1M" type="number" step="1"></div></div>
+        <div class="field"><label>$1M cumulative threshold</label><div class="ctrl cell-yellow"><input id="in-suppThreshold" type="number" step="1000"></div></div>
+
+        <h3>Payroll tax constants</h3>
+        <div class="field"><label>Social Security wage base</label><div class="ctrl cell-yellow"><input id="in-ssWageBase" type="number" step="100"></div></div>
+        <div class="field"><label>Social Security rate (employee)</label><div class="ctrl cell-yellow pct-wrap"><input id="in-ssRate" type="number" step="0.01"></div></div>
+        <div class="field"><label>Medicare rate (employee)</label><div class="ctrl cell-yellow pct-wrap"><input id="in-medicareRate" type="number" step="0.01"></div></div>
+        <div class="field"><label>Additional Medicare rate</label><div class="ctrl cell-yellow pct-wrap"><input id="in-addlMedicareRate" type="number" step="0.01"></div></div>
+        <div class="field"><label>Additional Medicare threshold</label><div class="ctrl cell-yellow"><input id="in-addlMedicareThreshold" type="number" step="1000"></div></div>
+
+        <h3>Retirement limits</h3>
+        <div class="field"><label>§415(c) annual additions limit</label><div class="ctrl cell-yellow"><input id="in-limit415c" type="number" step="100"></div></div>
+        <div class="field"><label>Catch-up limit, age 50–59 or 64+</label><div class="ctrl cell-yellow"><input id="in-catchup5059" type="number" step="50"></div></div>
+        <div class="field"><label>Catch-up limit, age 60–63 ("super")</label><div class="ctrl cell-yellow"><input id="in-catchup6063" type="number" step="50"></div></div>
+
+        <h3>HSA annual limits</h3>
+        <div class="field"><label>Self-only</label><div class="ctrl cell-yellow"><input id="in-hsaLimitSelf" type="number" step="50"></div></div>
+        <div class="field"><label>Family</label><div class="ctrl cell-yellow"><input id="in-hsaLimitFamily" type="number" step="50"></div></div>
+        <div class="field"><label>Age 55+ catch-up add-on</label><div class="ctrl cell-yellow"><input id="in-hsaCatchup55" type="number" step="50"></div></div>
+
+        <h3>Standard deduction</h3>
+        <div class="field"><label>Single</label><div class="ctrl cell-yellow"><input id="in-stdDedSingle" type="number" step="50"></div></div>
+        <div class="field"><label>Married Filing Jointly</label><div class="ctrl cell-yellow"><input id="in-stdDedMFJ" type="number" step="50"></div></div>
+        <div class="field"><label>Head of Household</label><div class="ctrl cell-yellow"><input id="in-stdDedHOH" type="number" step="50"></div></div>
+        <div class="field"><label>Married Filing Separately</label><div class="ctrl cell-yellow"><input id="in-stdDedMFS" type="number" step="50"></div></div>
+
+        <h3>Federal tax brackets</h3>
+        <div id="bracket-tables"></div>
+      </details>
+
+      <div class="panel">
+        <div class="btnrow">
+          <button class="primary" id="btn-recalc">Recalculate</button>
+          <button id="btn-reset">Reset to Example</button>
+          <button id="btn-clear-storage">Clear Saved Inputs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ OUTPUT COLUMN ============ -->
+    <div>
+      <div class="panel">
+        <h2>Annual Summary</h2>
+        <div class="summary-grid">
+          <div class="card">
+            <h3>Where Your Paycheck Goes (Annual)</h3>
+            <div id="card-paycheck"></div>
+          </div>
+          <div class="card">
+            <h3>Retirement, NQDC &amp; Benefits (Annual)</h3>
+            <div id="card-retirement"></div>
+          </div>
+          <div class="card">
+            <h3>Wages, ESPP &amp; Bonus</h3>
+            <div class="subsection">
+              <h4>W-2 Wages (Annual, Estimated)</h4>
+              <div id="card-w2"></div>
+            </div>
+            <div class="subsection">
+              <h4>ESPP (Annual)</h4>
+              <div id="card-espp"></div>
+            </div>
+            <div class="subsection">
+              <h4>Year-End Cash Bonus (Modeled)</h4>
+              <div id="card-bonus"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Total Estimated Tax Withheld — All Sources</h3>
+            <div id="card-alltax"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Paycheck-by-Paycheck Detail</h2>
+        <label class="col-toggle"><input type="checkbox" id="chk-show-all-cols"> Show all columns (incl. desired-vs-capped and running IRS-limit totals)</label>
+        <div class="table-scroll">
+          <table class="detail" id="detail-table">
+            <thead></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Cumulative 401(k) &amp; HSA Through the Year</h2>
+        <p class="hint">How each 401(k) source — Traditional, Roth, catch-up (Traditional &amp; Roth), after-tax, and employer match — plus HSA contributions stack up and accumulate across the year. Any employer/wellness HSA contribution is modeled as landing with the first paycheck. A hashed segment means that source has hit its annual max as of that paycheck.</p>
+        <div id="chart-legend" class="chart-legend"></div>
+        <div class="chart-scroll">
+          <div id="accum-chart-wrap">
+            <svg id="accum-chart" role="img" aria-label="Stacked bar chart of cumulative 401(k) sources and HSA contributions by pay period"></svg>
+            <div id="chart-tooltip" class="chart-tooltip" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Runs entirely in your browser — inputs are only saved to this browser's local storage, never sent anywhere. Not tax advice; verify against your actual pay stubs and a tax professional for anything consequential.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------------- */
+  /* Defaults                                                                */
+  /* ---------------------------------------------------------------------- */
+
+  function defaultInputs() {
+    return {
+      filingStatus: "Married Filing Jointly",
+      stateTaxRate: 0.044,
+      annualSalary: 250000,
+      firstPayDate: "2026-01-09",
+      employeeAge: 45,
+      catchupMustBeRoth: true,
+      addlFedWithholding: 0,
+
+      trad401kPct: 0.25,
+      roth401kPct: 0.0,
+      electiveLimit: 24500,
+      hsaCoverage: "Family",
+      hsaPerPaycheck: 305.77,
+      employerHsaAnnual: 0,
+      preTaxInsurance: 0,
+      otherPostTax: 8.30,
+
+      nqdcPct: 0.25,
+      afterTax401kPct: 0.0,
+      spillover: true,
+
+      matchBracketWidths: [1500, 1500, 7500],
+      matchRates: [1.0, 0.5, 0.33, 0.10],
+
+      esppPct: 0.06,
+      esppCap: 10625,
+      esppMonths: 6,
+      esppStart: "2026-01-01",
+
+      rsuVests: [
+        { value: 50000, date: "2026-03-03" },
+        { value: 50000, date: "2026-06-02" },
+        { value: 50000, date: "2026-09-01" },
+        { value: 50000, date: "2026-12-15" },
+      ],
+
+      bonusAmount: 20000,
+      bonusNqdcPct: 0,
+      bonusTradPct: 0,
+      bonusRothPct: 0,
+      bonusAfterTaxPct: 0.85,
+
+      suppRateUnder1M: 0.22,
+      suppRateOver1M: 0.37,
+      suppThreshold: 1000000,
+    };
+  }
+
+  // --- Updating this for a new tax year ---------------------------------
+  // 1. Replace every figure below with the new IRS Revenue Procedure's numbers
+  //    (brackets, standard deductions, HSA limits, payroll tax constants,
+  //    catch-up limits, §415(c) limit). All of it is also editable live in the
+  //    page's "Tax Year Settings" panel, but update the defaults here too so a
+  //    fresh visit starts from the right year.
+  // 2. `addlMedicareThreshold` is intentionally one flat figure for every
+  //    filing status. The real IRS thresholds differ by status ($200k
+  //    Single/HoH, $250k MFJ, $125k MFS) — this model simplifies to a single
+  //    $200k for all of them, matching the source spreadsheet it was built
+  //    from. Don't "fix" this without also updating the withholding formula
+  //    that reads it (search for addlMedicareThreshold in computeAll()).
+  // 3. Also update the year-specific *defaults* in defaultInputs() below:
+  //    firstPayDate, esppStart, and the four RSU vest dates — easy to miss
+  //    since they live in a different function than the tax constants.
+  // 4. PAY_PERIODS (26, biweekly) is structurally baked into the row-generation
+  //    loop in computeAll() (25 periods + bonus + 1), not just this constant —
+  //    changing pay frequency requires reworking that loop, not just a number.
+  function defaultTaxTables() {
+    return {
+      brackets: {
+        "Single": [
+          { over: 0, base: 0, rate: 0.10 },
+          { over: 12400, base: 1240, rate: 0.12 },
+          { over: 50400, base: 5800, rate: 0.22 },
+          { over: 105700, base: 17966, rate: 0.24 },
+          { over: 201775, base: 41024, rate: 0.32 },
+          { over: 256225, base: 58448, rate: 0.35 },
+          { over: 640600, base: 192979.25, rate: 0.37 },
+        ],
+        "Married Filing Jointly": [
+          { over: 0, base: 0, rate: 0.10 },
+          { over: 24800, base: 2480, rate: 0.12 },
+          { over: 100800, base: 11600, rate: 0.22 },
+          { over: 211400, base: 35932, rate: 0.24 },
+          { over: 403550, base: 82048, rate: 0.32 },
+          { over: 512450, base: 116896, rate: 0.35 },
+          { over: 768700, base: 206583.5, rate: 0.37 },
+        ],
+        "Head of Household": [
+          { over: 0, base: 0, rate: 0.10 },
+          { over: 17700, base: 1770, rate: 0.12 },
+          { over: 67450, base: 7740, rate: 0.22 },
+          { over: 105700, base: 16155, rate: 0.24 },
+          { over: 201775, base: 39213, rate: 0.32 },
+          { over: 256200, base: 56629, rate: 0.35 },
+          { over: 640600, base: 191169, rate: 0.37 },
+        ],
+        "Married Filing Separately": [
+          { over: 0, base: 0, rate: 0.10 },
+          { over: 12400, base: 1240, rate: 0.12 },
+          { over: 50400, base: 5800, rate: 0.22 },
+          { over: 105700, base: 17966, rate: 0.24 },
+          { over: 201775, base: 41024, rate: 0.32 },
+          { over: 256225, base: 58448, rate: 0.35 },
+          { over: 384350, base: 103291.75, rate: 0.37 },
+        ],
+      },
+      standardDeduction: {
+        "Single": 16100, "Married Filing Jointly": 32200, "Head of Household": 24150, "Married Filing Separately": 16100,
+      },
+      hsaLimit: { "Self-only": 4400, "Family": 8750 },
+      hsaCatchup55: 1000,
+      ssWageBase: 184500,
+      ssRate: 0.062,
+      medicareRate: 0.0145,
+      addlMedicareRate: 0.009,
+      addlMedicareThreshold: 200000,
+      catchup5059: 8000,
+      catchup6063: 11250,
+      limit415c: 72000,
+    };
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Calculation engine (validated against the source spreadsheet formulas) */
+  /* ---------------------------------------------------------------------- */
+
+  const PAY_PERIODS = 26; // biweekly — the row generation below (25 periods + bonus + 1) assumes this
+
+  function parseISODate(s) {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function addDays(date, days) {
+    const d = new Date(date.getTime());
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+  function datedifMonths(start, end) {
+    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    if (end.getDate() < start.getDate()) months--;
+    return months;
+  }
+  function bracketTax(taxable, brackets) {
+    let applicable = brackets[0];
+    for (const b of brackets) {
+      if (taxable >= b.over) applicable = b;
+      else break;
+    }
+    return applicable.base + applicable.rate * (taxable - applicable.over);
+  }
+  function tierMatch(prevCum, curCum, boundaries, rates) {
+    let match = 0;
+    for (let k = 0; k < rates.length; k++) {
+      const lo = boundaries[k], hi = boundaries[k + 1];
+      const overlapLo = Math.max(prevCum, lo);
+      const overlapHi = Math.min(curCum, hi);
+      match += rates[k] * Math.max(0, overlapHi - overlapLo);
+    }
+    return match;
+  }
+  function catchupLimit(age, tax) {
+    if (age < 50) return 0;
+    if (age >= 60 && age <= 63) return tax.catchup6063;
+    return tax.catchup5059;
+  }
+  function hsaLimitFor(inputs, tax) {
+    return tax.hsaLimit[inputs.hsaCoverage] + (inputs.employeeAge >= 55 ? tax.hsaCatchup55 : 0);
+  }
+  function rsuCumThru(rsuVests, date, strict) {
+    let sum = 0;
+    for (const v of rsuVests) {
+      if (strict ? v.date < date : v.date <= date) sum += v.value;
+    }
+    return sum;
+  }
+
+  function computeAll(raw, tax) {
+    const inputs = {
+      ...raw,
+      firstPayDate: parseISODate(raw.firstPayDate),
+      esppStart: parseISODate(raw.esppStart),
+      rsuVests: raw.rsuVests.map(v => ({ value: v.value, date: parseISODate(v.date) })),
+    };
+
+    const stdDeduction = tax.standardDeduction[inputs.filingStatus];
+    const brackets = tax.brackets[inputs.filingStatus];
+    const catchLimit = catchupLimit(inputs.employeeAge, tax);
+    const bonusTradFrac = (inputs.bonusTradPct + inputs.bonusRothPct) === 0 ? 0 : inputs.bonusTradPct / (inputs.bonusTradPct + inputs.bonusRothPct);
+    const matchBoundaries = [0, ...cumulativeSums(inputs.matchBracketWidths), inputs.electiveLimit + catchLimit];
+    const effectiveCeiling = tax.limit415c + catchLimit;
+
+    const rows = [];
+    let prev = { H: 0, M: 0, R: 0, X: 0, Z: 0, AN: 0, AK: null };
+    let prevDate = null;
+
+    // computeRow builds one paycheck's row. Its variable names are the column
+    // letters from the source spreadsheet this model was built from (Paycheck
+    // Detail sheet, columns C onward), kept 1:1 so a value here can be checked
+    // directly against a cell reference. Decoder, in column order:
+    //   C  gross pay this check                    R  cumulative §415(c) YTD (excl. catch-up)
+    //   D  desired regular 401(k) elective          S  NQDC deferral
+    //   E  regular elective contributed (capped)    T  HSA contribution
+    //   F  — its Traditional portion                U  pre-tax insurance
+    //   G  — its Roth portion                       V  total federal pre-tax deductions
+    //   H  cumulative regular elective YTD           W  federal taxable wages (W-2 Box 1)
+    //   I  elective overflow (pre-catch-up)          X  cumulative W-2 wages YTD (incl. RSU)
+    //   J  catch-up contributed (capped)             Y  FICA taxable wages
+    //   K  — its Traditional portion                 Z  cumulative FICA wages YTD
+    //   L  — its Roth portion                       AA  annualized taxable income (this check)
+    //   M  cumulative catch-up YTD                   AB  annual federal tax at that rate
+    //   N  spillover to after-tax 401(k)             AC  federal income tax withheld
+    //   O  employer 401(k) match                     AD  additional federal withholding (W-4)
+    //   P  desired after-tax 401(k) elected          AE  Social Security tax
+    //   Q  after-tax 401(k) contributed (capped)     AF  Medicare tax
+    //                                                 AG  Additional Medicare tax
+    //  AH  state & local tax                         AL  desired ESPP contribution
+    //  AI  total taxes (AC..AH)                      AM  ESPP contributed (capped)
+    //  AJ  other post-tax deductions                 AN  cumulative ESPP within offering period
+    //  AK  ESPP offering period #                    AO  net pay
+    //  AP  bonus amount this check (0 except Bonus row)
+    //  AQ  bonus NQDC deferral   AR  bonus desired 401(k) (Trad+Roth)   AS  bonus after-tax 401(k) elected
+    function computeRow(label, isBonus, date) {
+      const AP = isBonus ? inputs.bonusAmount : 0;
+      const salaryComponent = isBonus ? 0 : (inputs.annualSalary / PAY_PERIODS);
+      const C = salaryComponent + AP;
+      const AQ = AP * inputs.bonusNqdcPct;
+      const AR = (AP - AQ) * (inputs.bonusTradPct + inputs.bonusRothPct);
+      const AS = (AP - AQ) * inputs.bonusAfterTaxPct;
+
+      const D = ((C - AP) * (1 - inputs.nqdcPct)) * (inputs.trad401kPct + inputs.roth401kPct) + AR;
+      const E = Math.min(D, Math.max(0, inputs.electiveLimit - prev.H));
+      const fraction = D === 0 ? 0 : (((C - AP) * (1 - inputs.nqdcPct)) * inputs.trad401kPct + AR * bonusTradFrac) / D;
+      const F = E * fraction;
+      const G = E - F;
+      const H = prev.H + E;
+      const I = D - E;
+      const J = Math.min(I, Math.max(0, catchLimit - prev.M));
+      const K = inputs.catchupMustBeRoth ? 0 : J * fraction;
+      const L = J - K;
+      const M = prev.M + J;
+      const N = I - J;
+
+      const O = tierMatch(prev.H + prev.M, H + M, matchBoundaries, inputs.matchRates);
+
+      const P = (C - AP) * inputs.afterTax401kPct + AS;
+      const Q = Math.min(P + (inputs.spillover ? N : 0), Math.max(0, tax.limit415c - prev.R - (F + G + O)));
+      const R = prev.R + F + G + O + Q;
+
+      const S = (C - AP) * inputs.nqdcPct + AQ;
+      const T = isBonus ? 0 : inputs.hsaPerPaycheck;
+      const U = isBonus ? 0 : inputs.preTaxInsurance;
+      const V = F + K + S + T + U;
+      const W = C - V;
+
+      const rsuAtDate = rsuCumThru(inputs.rsuVests, date, false);
+      const rsuAtPrevDate = prevDate ? rsuCumThru(inputs.rsuVests, prevDate, false) : 0;
+      const X = prev.X + W + (rsuAtDate - rsuAtPrevDate);
+
+      const Y = C - T - U;
+      const Z = prev.Z + Y;
+
+      const AA = Math.max(0, W * PAY_PERIODS - stdDeduction);
+      const AB = bracketTax(AA, brackets);
+      const AC = AB / PAY_PERIODS;
+      const AD = inputs.addlFedWithholding;
+
+      const afterCum = Z + rsuAtDate;
+      const beforeCum = prevDate === null ? rsuCumThru(inputs.rsuVests, date, true) : prev.Z + rsuAtDate;
+
+      const AE = Math.max(0, Math.min(afterCum, tax.ssWageBase) - Math.min(beforeCum, tax.ssWageBase)) * tax.ssRate;
+      const AF = Y * tax.medicareRate;
+      const AG = (Math.max(0, afterCum - tax.addlMedicareThreshold) - Math.max(0, beforeCum - tax.addlMedicareThreshold)) * tax.addlMedicareRate;
+      const AH = W * inputs.stateTaxRate;
+      const AI = AC + AD + AE + AF + AG + AH;
+
+      const AJ = isBonus ? 0 : inputs.otherPostTax;
+
+      const AK = Math.floor(datedifMonths(inputs.esppStart, date) / inputs.esppMonths) + 1;
+      const AL = (C - AP) * inputs.esppPct;
+      const sameOffering = prev.AK === AK;
+      const AM = Math.min(AL, Math.max(0, inputs.esppCap - (sameOffering ? prev.AN : 0)));
+      const AN = (sameOffering ? prev.AN : 0) + AM;
+
+      const AO = C - (F + G + K + L + Q + S + T + U) - AI - AJ - AM;
+
+      const row = { label, isBonus, date, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+        AA, AB, AC, AD, AE, AF, AG, AH, AI, AJ, AK, AL, AM, AN, AO, AP, AQ, AR, AS };
+      rows.push(row);
+      prev = { H, M, R, X, Z, AN, AK };
+      prevDate = date;
+      return row;
+    }
+
+    let d = inputs.firstPayDate;
+    for (let p = 1; p <= 25; p++) {
+      computeRow(String(p), false, d);
+      d = addDays(d, 14);
+    }
+    const period25Date = rows[24].date;
+    computeRow("Bonus", true, addDays(period25Date, 1));
+    computeRow("26", false, addDays(period25Date, 14));
+
+    const rsuRows = [];
+    let prevD = 0;
+    for (let k = 0; k < inputs.rsuVests.length; k++) {
+      const vest = inputs.rsuVests[k];
+      const Cv = vest.value;
+      const Dv = prevD + Cv;
+      const Ev = Math.max(0, Math.min(Dv, inputs.suppThreshold) - prevD) * inputs.suppRateUnder1M
+        + Math.max(0, Dv - inputs.suppThreshold) * inputs.suppRateOver1M;
+
+      let afterCum, beforeCum;
+      if (k === 0) {
+        const payrollBefore = rows.filter(r => r.date < vest.date).reduce((s, r) => s + r.Y, 0);
+        const payrollAfter = rows.filter(r => r.date <= vest.date).reduce((s, r) => s + r.Y, 0);
+        afterCum = Dv + payrollAfter;
+        beforeCum = payrollBefore;
+      } else {
+        const payrollAtVest = rows.filter(r => r.date <= vest.date).reduce((s, r) => s + r.Y, 0);
+        afterCum = Dv + payrollAtVest;
+        beforeCum = prevD + payrollAtVest;
+      }
+      const Fv = Math.max(0, Math.min(afterCum, tax.ssWageBase) - Math.min(beforeCum, tax.ssWageBase)) * tax.ssRate;
+      const Gv = Cv * tax.medicareRate;
+      const Hv = (Math.max(0, afterCum - tax.addlMedicareThreshold) - Math.max(0, beforeCum - tax.addlMedicareThreshold)) * tax.addlMedicareRate;
+      const Iv = Cv * inputs.stateTaxRate;
+      const Jv = Ev + Fv + Gv + Hv + Iv;
+      const Kv = Cv - Jv;
+
+      rsuRows.push({ quarter: k + 1, date: vest.date, C: Cv, D: Dv, E: Ev, F: Fv, G: Gv, H: Hv, I: Iv, J: Jv, K: Kv });
+      prevD = Dv;
+    }
+
+    const sum = (arr, key) => arr.reduce((s, r) => s + r[key], 0);
+    const hsaAnnualLimit = hsaLimitFor(inputs, tax);
+
+    // Same boundaries tierMatch() uses per-paycheck above, just evaluated over the
+    // full [0, ceiling] range in one call — the theoretical max match for the year.
+    const maxPossibleMatchThisYear = tierMatch(0, inputs.electiveLimit + catchLimit, matchBoundaries, inputs.matchRates);
+
+    const totalTradRoth = sum(rows, "F") + sum(rows, "G");
+    const totalCatchup = sum(rows, "K") + sum(rows, "L");
+    const totalAfterTax = sum(rows, "Q");
+    const totalMatch = sum(rows, "O");
+    const total401kAll = totalTradRoth + totalCatchup + totalAfterTax + totalMatch;
+    const room415cRemaining = tax.limit415c - (sum(rows, "F") + sum(rows, "G") + sum(rows, "O") + sum(rows, "Q"));
+
+    const grossPay = sum(rows, "C");
+    const netPay = sum(rows, "AO");
+    const fedBase = sum(rows, "AC"), addlFed = sum(rows, "AD"), ss = sum(rows, "AE"), medicare = sum(rows, "AF"),
+      addlMed = sum(rows, "AG"), stateTax = sum(rows, "AH"), otherPostTax = sum(rows, "AJ"), esppTotal = sum(rows, "AM");
+
+    const rsuTotal = sum(rsuRows, "C"), rsuFed = sum(rsuRows, "E"), rsuSS = sum(rsuRows, "F"), rsuMed = sum(rsuRows, "G"),
+      rsuAddlMed = sum(rsuRows, "H"), rsuState = sum(rsuRows, "I"), rsuNet = sum(rsuRows, "K");
+
+    const w2Box1 = sum(rows, "W");
+    const ficaWages = sum(rows, "Y");
+
+    const totalW2AllSources = w2Box1 + rsuTotal;
+    const totalFedAllSources = fedBase + addlFed + rsuFed;
+    const totalSSAllSources = ss + rsuSS;
+    const totalMedAllSources = medicare + addlMed + rsuMed + rsuAddlMed;
+    const totalStateAllSources = stateTax + rsuState;
+    const grandTotalTax = totalFedAllSources + totalSSAllSources + totalMedAllSources + totalStateAllSources;
+    const effRateAllSources = totalW2AllSources === 0 ? 0 : grandTotalTax / totalW2AllSources;
+
+    const offeringPeriodsCovered = rows[25].AK - rows[0].AK + 1;
+
+    const summary = {
+      grossPay, netPay,
+      effTaxRate: grossPay === 0 ? 0 : (fedBase + addlFed + ss + medicare + addlMed + stateTax) / grossPay,
+      takeHomeRate: grossPay === 0 ? 0 : netPay / grossPay,
+      trad401k: sum(rows, "F"), roth401k: sum(rows, "G"),
+      catchupTrad: sum(rows, "K"), catchupRoth: sum(rows, "L"),
+      afterTax401k: totalAfterTax, nqdcAnnual: sum(rows, "S"),
+      hsaAnnual: sum(rows, "T"), preTaxInsAnnual: sum(rows, "U"),
+      employerHsaAnnual: inputs.employerHsaAnnual,
+      hsaTotalAnnual: sum(rows, "T") + inputs.employerHsaAnnual,
+      fedBase, addlFed, ss, medicare, addlMed, stateTax, otherPostTax, esppTotal,
+      w2Box1, ficaWages,
+      totalTradRoth, totalCatchup, totalMatch, total401kAll,
+      limit415c: tax.limit415c, room415cRemaining, effectiveCeiling,
+      hsaAnnualLimit, maxPossibleMatchThisYear,
+      esppOfferingPeriodsCovered: offeringPeriodsCovered,
+      rsuTotal, rsuFed, rsuSS, rsuMed, rsuAddlMed, rsuState, rsuNet,
+      bonusAmount: inputs.bonusAmount, bonusNqdcDeferred: sum(rows, "AQ"),
+      bonusDesired401k: sum(rows, "AR"), bonusAfterTaxElected: sum(rows, "AS"),
+      totalW2AllSources, totalFedAllSources, totalSSAllSources, totalMedAllSources, totalStateAllSources,
+      grandTotalTax, effRateAllSources,
+    };
+
+    return { rows, rsuRows, summary };
+  }
+
+  function cumulativeSums(arr) {
+    const out = [];
+    let acc = 0;
+    for (const v of arr) { acc += v; out.push(acc); }
+    return out;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* State                                                                   */
+  /* ---------------------------------------------------------------------- */
+
+  let state = { inputs: defaultInputs(), tax: defaultTaxTables() };
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem("paycheckCalc.state.v1");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.inputs || !parsed.tax) return null;
+
+      // Merge onto fresh defaults, not the raw parsed object: a save from an
+      // older version of this page can predate a field that's since been
+      // added (missing key) or renamed (stale key the current code no longer
+      // reads) — a straight `return parsed` would leave `state` missing
+      // something the rest of the app assumes is always present, and crash.
+      const inputs = { ...defaultInputs(), ...parsed.inputs };
+      const defaultTax = defaultTaxTables();
+      const tax = {
+        ...defaultTax,
+        ...parsed.tax,
+        // One level deeper too, so a future new filing status/coverage type
+        // added to one of these (like employerHsaAnnual was added to inputs)
+        // falls back to its default instead of being silently absent.
+        brackets: { ...defaultTax.brackets, ...(parsed.tax.brackets || {}) },
+        standardDeduction: { ...defaultTax.standardDeduction, ...(parsed.tax.standardDeduction || {}) },
+        hsaLimit: { ...defaultTax.hsaLimit, ...(parsed.tax.hsaLimit || {}) },
+      };
+
+      // One-time migration: matchBoundaries was renamed to matchBracketWidths.
+      if (parsed.inputs.matchBoundaries && !parsed.inputs.matchBracketWidths) {
+        inputs.matchBracketWidths = parsed.inputs.matchBoundaries;
+      }
+
+      return { inputs, tax };
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+  function saveState() {
+    try { localStorage.setItem("paycheckCalc.state.v1", JSON.stringify(state)); } catch (e) { /* ignore */ }
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Formatting                                                             */
+  /* ---------------------------------------------------------------------- */
+
+  const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  function fmtUSD(n) { return usd.format(n || 0); }
+  function fmtUSD0(n) { return usd0.format(n || 0); }
+  function fmtPct1(n) { return (100 * (n || 0)).toFixed(1) + "%"; }
+  function fmtDate(d) { return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }); }
+
+  /* ---------------------------------------------------------------------- */
+  /* Binding: simple scalar fields                                          */
+  /* ---------------------------------------------------------------------- */
+
+  const SCALAR_BINDINGS = [
+    { id: "in-filingStatus", key: "filingStatus", kind: "select" },
+    { id: "in-stateTaxRatePct", key: "stateTaxRate", kind: "percent" },
+    { id: "in-annualSalary", key: "annualSalary", kind: "number" },
+    { id: "in-firstPayDate", key: "firstPayDate", kind: "date" },
+    { id: "in-employeeAge", key: "employeeAge", kind: "number" },
+    { id: "in-catchupMustBeRoth", key: "catchupMustBeRoth", kind: "boolYesNo" },
+    { id: "in-addlFedWithholding", key: "addlFedWithholding", kind: "number" },
+
+    { id: "in-trad401kPct", key: "trad401kPct", kind: "percent" },
+    { id: "in-roth401kPct", key: "roth401kPct", kind: "percent" },
+    { id: "in-electiveLimit", key: "electiveLimit", kind: "number" },
+    { id: "in-hsaCoverage", key: "hsaCoverage", kind: "select" },
+    { id: "in-hsaPerPaycheck", key: "hsaPerPaycheck", kind: "number" },
+    { id: "in-employerHsaAnnual", key: "employerHsaAnnual", kind: "number" },
+    { id: "in-preTaxInsurance", key: "preTaxInsurance", kind: "number" },
+    { id: "in-otherPostTax", key: "otherPostTax", kind: "number" },
+
+    { id: "in-nqdcPct", key: "nqdcPct", kind: "percent" },
+    { id: "in-afterTax401kPct", key: "afterTax401kPct", kind: "percent" },
+    { id: "in-spillover", key: "spillover", kind: "boolYesNo" },
+
+    { id: "in-esppPct", key: "esppPct", kind: "percent" },
+    { id: "in-esppCap", key: "esppCap", kind: "number" },
+    { id: "in-esppMonths", key: "esppMonths", kind: "number" },
+    { id: "in-esppStart", key: "esppStart", kind: "date" },
+
+    { id: "in-bonusAmount", key: "bonusAmount", kind: "number" },
+    { id: "in-bonusNqdcPct", key: "bonusNqdcPct", kind: "percent" },
+    { id: "in-bonusTradPct", key: "bonusTradPct", kind: "percent" },
+    { id: "in-bonusRothPct", key: "bonusRothPct", kind: "percent" },
+    { id: "in-bonusAfterTaxPct", key: "bonusAfterTaxPct", kind: "percent" },
+
+    { id: "in-suppRateUnder1M", key: "suppRateUnder1M", kind: "percent" },
+    { id: "in-suppRateOver1M", key: "suppRateOver1M", kind: "percent" },
+    { id: "in-suppThreshold", key: "suppThreshold", kind: "number" },
+  ];
+
+  const TAX_SCALAR_BINDINGS = [
+    { id: "in-ssWageBase", key: "ssWageBase", kind: "number" },
+    { id: "in-ssRate", key: "ssRate", kind: "percent" },
+    { id: "in-medicareRate", key: "medicareRate", kind: "percent" },
+    { id: "in-addlMedicareRate", key: "addlMedicareRate", kind: "percent" },
+    { id: "in-addlMedicareThreshold", key: "addlMedicareThreshold", kind: "number" },
+    { id: "in-limit415c", key: "limit415c", kind: "number" },
+    { id: "in-catchup5059", key: "catchup5059", kind: "number" },
+    { id: "in-catchup6063", key: "catchup6063", kind: "number" },
+    { id: "in-hsaLimitSelf", key: ["hsaLimit", "Self-only"], kind: "number" },
+    { id: "in-hsaLimitFamily", key: ["hsaLimit", "Family"], kind: "number" },
+    { id: "in-hsaCatchup55", key: "hsaCatchup55", kind: "number" },
+    { id: "in-stdDedSingle", key: ["standardDeduction", "Single"], kind: "number" },
+    { id: "in-stdDedMFJ", key: ["standardDeduction", "Married Filing Jointly"], kind: "number" },
+    { id: "in-stdDedHOH", key: ["standardDeduction", "Head of Household"], kind: "number" },
+    { id: "in-stdDedMFS", key: ["standardDeduction", "Married Filing Separately"], kind: "number" },
+  ];
+
+  function getVal(obj, key) {
+    if (Array.isArray(key)) return obj[key[0]][key[1]];
+    return obj[key];
+  }
+  function setVal(obj, key, v) {
+    if (Array.isArray(key)) obj[key[0]][key[1]] = v;
+    else obj[key] = v;
+  }
+
+  function fillControl(el, kind, value) {
+    if (kind === "percent") el.value = round4(value * 100);
+    else if (kind === "boolYesNo") el.value = value ? "Yes" : "No";
+    else el.value = value;
+  }
+  function readControl(el, kind) {
+    if (kind === "percent") return (parseFloat(el.value) || 0) / 100;
+    if (kind === "boolYesNo") return el.value === "Yes";
+    if (kind === "number") return parseFloat(el.value) || 0;
+    return el.value;
+  }
+  function round4(n) { return Math.round(n * 10000) / 10000; }
+
+  function populateScalarBindings(list, target) {
+    for (const b of list) {
+      const el = document.getElementById(b.id);
+      fillControl(el, b.kind, getVal(target, b.key));
+      // .oninput (not addEventListener) so re-calling populateAllControls() — e.g. on
+      // "Reset to Example" — replaces the handler instead of stacking a duplicate on it.
+      el.oninput = () => {
+        setVal(target, b.key, readControl(el, b.kind));
+        recalcAndRender();
+      };
+    }
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Dynamic tables: RSU inputs, match brackets, federal brackets            */
+  /* ---------------------------------------------------------------------- */
+
+  function buildRSUInputTable() {
+    const tbody = document.querySelector("#rsu-input-table tbody");
+    tbody.innerHTML = "";
+    const labels = ["Q1 (Mar)", "Q2 (Jun)", "Q3 (Sep)", "Q4 (Dec)"];
+    state.inputs.rsuVests.forEach((v, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${labels[i]}</td>
+        <td><input type="number" step="100" value="${v.value}" data-rsu-idx="${i}" data-field="value"></td>
+        <td><input type="date" value="${v.date}" data-rsu-idx="${i}" data-field="date"></td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const idx = parseInt(inp.dataset.rsuIdx, 10);
+        const field = inp.dataset.field;
+        state.inputs.rsuVests[idx][field] = field === "value" ? (parseFloat(inp.value) || 0) : inp.value;
+        recalcAndRender();
+      });
+    });
+  }
+
+  function buildMatchTable() {
+    const tbody = document.querySelector("#match-table tbody");
+    tbody.innerHTML = "";
+    const labels = ["Bracket 1", "Bracket 2 (width beyond B1)", "Bracket 3 (width beyond B1+B2)"];
+    state.inputs.matchBracketWidths.forEach((w, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${labels[i]}</td>
+        <td><input type="number" step="100" value="${w}" data-match-idx="${i}" data-field="width"></td>
+        <td><input type="number" step="1" value="${round4(state.inputs.matchRates[i] * 100)}" data-match-idx="${i}" data-field="rate"></td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const idx = parseInt(inp.dataset.matchIdx, 10);
+        const field = inp.dataset.field;
+        if (field === "width") state.inputs.matchBracketWidths[idx] = parseFloat(inp.value) || 0;
+        else state.inputs.matchRates[idx] = (parseFloat(inp.value) || 0) / 100;
+        recalcAndRender();
+      });
+    });
+    const rate4 = document.getElementById("in-matchRate4");
+    rate4.value = round4(state.inputs.matchRates[3] * 100);
+    rate4.oninput = () => { state.inputs.matchRates[3] = (parseFloat(rate4.value) || 0) / 100; recalcAndRender(); };
+  }
+
+  function buildBracketTables() {
+    const container = document.getElementById("bracket-tables");
+    container.innerHTML = "";
+    const statuses = ["Single", "Married Filing Jointly", "Head of Household", "Married Filing Separately"];
+    for (const status of statuses) {
+      const wrap = document.createElement("div");
+      wrap.style.marginBottom = "10px";
+      const title = document.createElement("div");
+      title.style.fontSize = "11.5px";
+      title.style.fontWeight = "600";
+      title.style.margin = "6px 0 2px";
+      title.textContent = status;
+      wrap.appendChild(title);
+
+      const table = document.createElement("table");
+      table.className = "mini";
+      table.innerHTML = `<thead><tr><th>Income over</th><th>Base tax</th><th>Rate %</th></tr></thead><tbody></tbody>`;
+      const tbody = table.querySelector("tbody");
+      state.tax.brackets[status].forEach((b, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="number" step="100" value="${b.over}" data-status="${status}" data-idx="${i}" data-field="over"></td>
+          <td><input type="number" step="1" value="${b.base}" data-status="${status}" data-idx="${i}" data-field="base"></td>
+          <td><input type="number" step="0.1" value="${round4(b.rate * 100)}" data-status="${status}" data-idx="${i}" data-field="rate"></td>`;
+        tbody.appendChild(tr);
+      });
+      wrap.appendChild(table);
+      container.appendChild(wrap);
+    }
+    container.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const status = inp.dataset.status, idx = parseInt(inp.dataset.idx, 10), field = inp.dataset.field;
+        const b = state.tax.brackets[status][idx];
+        if (field === "rate") b.rate = (parseFloat(inp.value) || 0) / 100;
+        else b[field] = parseFloat(inp.value) || 0;
+        recalcAndRender();
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Rendering                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  function rowsHTML(pairs) {
+    return pairs.map(p => {
+      if (p.type === "total") return `<div class="row total"><span class="l">${p.l}</span><span class="v">${p.v}</span></div>`;
+      if (p.type === "sub") return `<div class="row"><span class="l" style="font-weight:600;color:var(--text)">${p.l}</span><span class="v">${p.v}</span></div>`;
+      return `<div class="row${p.indent ? " indent" : ""}"><span class="l">${p.l}</span><span class="v">${p.v}</span></div>`;
+    }).join("");
+  }
+
+  function renderSummary(summary) {
+    document.getElementById("card-paycheck").innerHTML = rowsHTML([
+      { l: "Gross pay", v: fmtUSD(summary.grossPay) },
+      { l: "Traditional 401(k) — regular", v: "−" + fmtUSD(summary.trad401k) },
+      { l: "Roth 401(k) — regular", v: "−" + fmtUSD(summary.roth401k) },
+      { l: "401(k) catch-up — traditional", v: "−" + fmtUSD(summary.catchupTrad) },
+      { l: "401(k) catch-up — Roth", v: "−" + fmtUSD(summary.catchupRoth) },
+      { l: "401(k) after-tax (incl. spillover)", v: "−" + fmtUSD(summary.afterTax401k) },
+      { l: "NQDC deferral", v: "−" + fmtUSD(summary.nqdcAnnual) },
+      { l: "HSA contribution", v: "−" + fmtUSD(summary.hsaAnnual) },
+      { l: "Pre-tax insurance", v: "−" + fmtUSD(summary.preTaxInsAnnual) },
+      { l: "Federal income tax (base)", v: "−" + fmtUSD(summary.fedBase) },
+      { l: "Additional federal withholding", v: "−" + fmtUSD(summary.addlFed) },
+      { l: "Social Security tax", v: "−" + fmtUSD(summary.ss) },
+      { l: "Medicare tax", v: "−" + fmtUSD(summary.medicare) },
+      { l: "Additional Medicare tax", v: "−" + fmtUSD(summary.addlMed) },
+      { l: "State &amp; local tax", v: "−" + fmtUSD(summary.stateTax) },
+      { l: "Other post-tax deductions", v: "−" + fmtUSD(summary.otherPostTax) },
+      { l: "ESPP contribution", v: "−" + fmtUSD(summary.esppTotal) },
+      { l: "Net pay (take-home)", v: fmtUSD(summary.netPay), type: "total" },
+    ]);
+
+    document.getElementById("card-w2").innerHTML = rowsHTML([
+      { l: "Box 1 — Federal taxable wages", v: fmtUSD(summary.w2Box1) },
+      { l: "Box 3/5 — SS &amp; Medicare wages (FICA)", v: fmtUSD(summary.ficaWages) },
+    ]);
+
+    document.getElementById("card-retirement").innerHTML = rowsHTML([
+      { l: "Employee 401(k) — regular (Trad+Roth)", v: fmtUSD(summary.totalTradRoth) },
+      { l: "Employee 401(k) — catch-up (Trad+Roth)", v: fmtUSD(summary.totalCatchup) },
+      { l: "Employee 401(k) — after-tax", v: fmtUSD(summary.afterTax401k) },
+      { l: "Employer 401(k) match", v: fmtUSD(summary.totalMatch) },
+      { l: "Total 401(k) — all sources", v: fmtUSD(summary.total401kAll), type: "sub" },
+      { l: "vs. §415(c) limit (excl. catch-up)", v: fmtUSD(summary.limit415c), indent: true },
+      { l: "§415(c) room remaining", v: fmtUSD(summary.room415cRemaining), indent: true },
+      { l: "Effective total ceiling (incl. catch-up)", v: fmtUSD(summary.effectiveCeiling), indent: true },
+      { l: "NQDC deferral (annual)", v: fmtUSD(summary.nqdcAnnual) },
+      { l: "HSA contributions — employee (annual)", v: fmtUSD(summary.hsaAnnual) },
+      { l: "HSA contributions — employer/wellness (annual)", v: fmtUSD(summary.employerHsaAnnual) },
+      { l: "Total HSA contributions", v: fmtUSD(summary.hsaTotalAnnual), type: "sub" },
+      { l: "HSA annual IRS limit", v: fmtUSD(summary.hsaAnnualLimit), indent: true },
+      { l: "HSA room remaining", v: fmtUSD(summary.hsaAnnualLimit - summary.hsaTotalAnnual), indent: true },
+    ]);
+
+    document.getElementById("card-espp").innerHTML = rowsHTML([
+      { l: "ESPP contributions (total)", v: fmtUSD(summary.esppTotal) },
+      { l: "Offering periods covered this year", v: summary.esppOfferingPeriodsCovered },
+    ]);
+
+    document.getElementById("card-bonus").innerHTML = rowsHTML([
+      { l: "Bonus amount", v: fmtUSD(summary.bonusAmount) },
+      { l: "NQDC deferred from bonus", v: fmtUSD(summary.bonusNqdcDeferred) },
+      { l: "Desired 401(k) from bonus (Trad+Roth)", v: fmtUSD(summary.bonusDesired401k) },
+      { l: "Elected after-tax 401(k) from bonus", v: fmtUSD(summary.bonusAfterTaxElected) },
+    ]);
+
+    document.getElementById("card-alltax").innerHTML = rowsHTML([
+      { l: "Total W-2 wages (payroll + RSU)", v: fmtUSD(summary.totalW2AllSources) },
+      { l: "Total federal tax withheld", v: fmtUSD(summary.totalFedAllSources) },
+      { l: "Total Social Security tax withheld", v: fmtUSD(summary.totalSSAllSources) },
+      { l: "Total Medicare tax withheld (incl. addl.)", v: fmtUSD(summary.totalMedAllSources) },
+      { l: "Total state tax withheld", v: fmtUSD(summary.totalStateAllSources) },
+      { l: "Grand total tax withheld, all sources", v: fmtUSD(summary.grandTotalTax), type: "total" },
+      { l: "Effective tax rate, all sources", v: fmtPct1(summary.effRateAllSources), type: "sub" },
+    ]);
+  }
+
+  // "essential: false" columns are hidden unless "Show all columns" is checked.
+  // (AP "Bonus" was dropped entirely — it's 0 for every row except the Bonus
+  // row, where it always equals that row's own Gross Pay, already shown and
+  // already flagged by the row's own highlighting and "Bonus" label.)
+  const DETAIL_COLS = [
+    { key: "label", label: "Period", group: "", essential: true },
+    { key: "date", label: "Pay Date", group: "", essential: true },
+
+    { key: "C", label: "Gross Pay", group: "Gross Pay", essential: true },
+
+    { key: "S", label: "NQDC Deferral", group: "NQDC", essential: true },
+
+    { key: "D", label: "Desired 401(k)", group: "Regular 401(k)", essential: false },
+    { key: "E", label: "Elective Contributed", group: "Regular 401(k)", essential: true },
+    { key: "F", label: "— Traditional", group: "Regular 401(k)", essential: true },
+    { key: "G", label: "— Roth", group: "Regular 401(k)", essential: true },
+    { key: "H", label: "Cum. Elective YTD", group: "Regular 401(k)", essential: true },
+    { key: "I", label: "Overflow", group: "Regular 401(k)", essential: false },
+
+    { key: "J", label: "Catch-Up", group: "Catch-Up 401(k)", essential: false },
+    { key: "K", label: "— CU Traditional", group: "Catch-Up 401(k)", essential: false },
+    { key: "L", label: "— CU Roth", group: "Catch-Up 401(k)", essential: false },
+    { key: "M", label: "Cum. Catch-Up YTD", group: "Catch-Up 401(k)", essential: false },
+
+    { key: "N", label: "Spillover", group: "After-Tax 401(k) & Match", essential: false },
+    { key: "O", label: "Employer Match", group: "After-Tax 401(k) & Match", essential: true },
+    { key: "P", label: "After-Tax Elected", group: "After-Tax 401(k) & Match", essential: false },
+    { key: "Q", label: "After-Tax Contributed", group: "After-Tax 401(k) & Match", essential: true },
+    { key: "R", label: "Cum. §415(c) YTD", group: "After-Tax 401(k) & Match", essential: false },
+
+    { key: "T", label: "HSA", group: "HSA & Insurance", essential: true },
+    { key: "U", label: "Pre-Tax Ins.", group: "HSA & Insurance", essential: false },
+
+    { key: "W", label: "Fed Taxable (W-2)", group: "Wages", essential: true },
+    { key: "X", label: "Cum. W-2 YTD", group: "Wages", essential: false },
+    { key: "Y", label: "FICA Wages", group: "Wages", essential: true },
+    { key: "Z", label: "Cum. FICA YTD", group: "Wages", essential: false },
+
+    { key: "AC", label: "Fed Tax W/H", group: "Taxes", essential: true },
+    { key: "AD", label: "Addl. Fed W/H", group: "Taxes", essential: false },
+    { key: "AE", label: "SS Tax", group: "Taxes", essential: true },
+    { key: "AF", label: "Medicare", group: "Taxes", essential: true },
+    { key: "AG", label: "Addl. Medicare", group: "Taxes", essential: true },
+    { key: "AH", label: "State Tax", group: "Taxes", essential: true },
+    { key: "AI", label: "Total Taxes", group: "Taxes", essential: true },
+
+    { key: "AJ", label: "Other Post-Tax", group: "Other Deductions", essential: false },
+    { key: "AM", label: "ESPP", group: "Other Deductions", essential: true },
+
+    { key: "AO", label: "Net Pay", group: "Net Pay", essential: true },
+  ];
+  const MONEY_COLS = new Set(DETAIL_COLS.map(c => c.key).filter(k => !["label", "date"].includes(k)));
+  const CUMULATIVE_COLS = new Set(["H", "M", "R", "X", "Z"]);
+
+  let showAllColumns = false;
+
+  // Tags each visible column with its position within its group-run (for the
+  // spanning group header) and whether it's the last column in that run (for
+  // the vertical divider between groups).
+  function withGroupRuns(cols) {
+    let groupIndex = -1;
+    let lastGroup;
+    return cols.map((col, i) => {
+      if (col.group !== lastGroup) { groupIndex++; lastGroup = col.group; }
+      const isGroupEnd = i === cols.length - 1 || cols[i + 1].group !== col.group;
+      return { ...col, groupIndex, isGroupEnd };
+    });
+  }
+
+  function renderDetailTable(rows) {
+    const table = document.getElementById("detail-table");
+    const cols = withGroupRuns((showAllColumns ? DETAIL_COLS : DETAIL_COLS.filter(c => c.essential)));
+
+    const groupRow = [];
+    for (const col of cols) {
+      const prev = groupRow[groupRow.length - 1];
+      if (prev && prev.group === col.group && prev.groupIndex === col.groupIndex) prev.span++;
+      else groupRow.push({ group: col.group, groupIndex: col.groupIndex, span: 1 });
+    }
+    const groupHeaderHTML = groupRow.map(g =>
+      `<th class="grp-head grp-${g.groupIndex % 2}" colspan="${g.span}">${g.group}</th>`
+    ).join("");
+    const labelHeaderHTML = cols.map(c => `<th class="${c.isGroupEnd ? "grp-end" : ""}">${c.label}</th>`).join("");
+    table.querySelector("thead").innerHTML = `<tr>${groupHeaderHTML}</tr><tr>${labelHeaderHTML}</tr>`;
+
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = rows.map(r => {
+      const cls = r.isBonus ? ' class="bonus-row"' : "";
+      return "<tr" + cls + ">" + cols.map(c => {
+        const endCls = c.isGroupEnd ? ' class="grp-end"' : "";
+        if (c.key === "label") return `<td${endCls}>${r.label}</td>`;
+        if (c.key === "date") return `<td${endCls}>${fmtDate(r.date)}</td>`;
+        return `<td${endCls}>${fmtUSD(r[c.key])}</td>`;
+      }).join("") + "</tr>";
+    }).join("");
+
+    const sums = {};
+    for (const c of cols) if (MONEY_COLS.has(c.key)) sums[c.key] = rows.reduce((s, r) => s + r[c.key], 0);
+    table.querySelector("tfoot").innerHTML = "<tr>" + cols.map(c => {
+      const endCls = c.isGroupEnd ? ' class="grp-end"' : "";
+      if (c.key === "label") return `<td${endCls}>Total</td>`;
+      if (c.key === "date") return `<td${endCls}></td>`;
+      if (CUMULATIVE_COLS.has(c.key)) return `<td${endCls}>${fmtUSD(rows[rows.length - 1][c.key])}</td>`;
+      return `<td${endCls}>${fmtUSD(sums[c.key])}</td>`;
+    }).join("") + "</tr>";
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Cumulative 401(k) / NQDC / HSA — stacked bar chart                     */
+  /* ---------------------------------------------------------------------- */
+
+  const ACCUMULATION_SERIES = [
+    { key: "trad", label: "401(k) — Traditional", varName: "--series-1", get: r => r.F },
+    { key: "roth", label: "401(k) — Roth", varName: "--series-2", get: r => r.G },
+    { key: "catchupTrad", label: "401(k) Catch-Up — Traditional", varName: "--series-3", get: r => r.K },
+    { key: "catchupRoth", label: "401(k) Catch-Up — Roth", varName: "--series-4", get: r => r.L },
+    { key: "afterTax", label: "401(k) — After-Tax", varName: "--series-5", get: r => r.Q },
+    { key: "match", label: "Employer 401(k) Match", varName: "--series-6", get: r => r.O },
+    { key: "hsa", label: "HSA", varName: "--series-7", get: r => r.T + (r.label === "1" ? state.inputs.employerHsaAnnual : 0) },
+  ];
+
+  function niceCeil(max) {
+    if (max <= 0) return 100;
+    const exp = Math.floor(Math.log10(max));
+    const base = Math.pow(10, exp);
+    const norm = max / base;
+    let niceNorm;
+    if (norm <= 1) niceNorm = 1;
+    else if (norm <= 2) niceNorm = 2;
+    else if (norm <= 2.5) niceNorm = 2.5;
+    else if (norm <= 5) niceNorm = 5;
+    else niceNorm = 10;
+    return niceNorm * base;
+  }
+
+  function renderAccumulationLegend() {
+    const legend = document.getElementById("chart-legend");
+    legend.innerHTML = ACCUMULATION_SERIES.map(s =>
+      `<span class="key"><span class="swatch" style="background:var(${s.varName})"></span>${s.label}</span>`
+    ).join("");
+  }
+
+  function renderAccumulationChart(rows) {
+    renderAccumulationLegend();
+
+    const margin = { top: 20, right: 16, bottom: 24, left: 66 };
+    const bandWidth = 34;
+    const barWidth = 24;
+    const plotWidth = rows.length * bandWidth;
+    const plotHeight = 300;
+    const width = plotWidth + margin.left + margin.right;
+    const height = plotHeight + margin.top + margin.bottom;
+    const EPS = 0.005;
+
+    // A series' own IRS/plan cap, where the engine doesn't already clamp its
+    // per-row value to zero once hit (right now: only HSA — everything else in
+    // ACCUMULATION_SERIES is a genuinely clamped column, detected below via flatlining).
+    const hsaAnnualLimit = hsaLimitFor(state.inputs, state.tax);
+
+    // Running cumulative totals per series, stack boundaries per row, and
+    // whether each series has hit its annual max as of that row (once true,
+    // stays true — every underlying column is a monotonic clamp).
+    const cum = {};
+    ACCUMULATION_SERIES.forEach(s => { cum[s.key] = 0; });
+    const stacks = rows.map(r => {
+      const boundaries = [0];
+      const capped = {};
+      let running = 0;
+      ACCUMULATION_SERIES.forEach(s => {
+        const before = cum[s.key];
+        const own = s.get(r);
+        cum[s.key] += own;
+        running += cum[s.key];
+        boundaries.push(running);
+        capped[s.key] = s.key === "hsa"
+          ? cum[s.key] >= hsaAnnualLimit - EPS
+          : (before > EPS && own <= EPS);
+      });
+      return { boundaries, capped };
+    });
+
+    const grandMax = stacks[stacks.length - 1].boundaries[ACCUMULATION_SERIES.length];
+    const yMax = niceCeil(grandMax);
+    const scaleY = v => margin.top + plotHeight * (1 - v / yMax);
+    const baselineY = margin.top + plotHeight;
+
+    const tickCount = 5;
+    let gridlines = "";
+    for (let t = 0; t <= tickCount; t++) {
+      const val = (yMax / tickCount) * t;
+      const y = scaleY(val);
+      gridlines += `<line class="gridline" x1="${margin.left}" x2="${margin.left + plotWidth}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>`;
+      gridlines += `<text x="${margin.left - 8}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="middle">${fmtUSD0(val)}</text>`;
+    }
+    gridlines += `<line class="axis-line" x1="${margin.left}" x2="${margin.left + plotWidth}" y1="${baselineY}" y2="${baselineY}"></line>`;
+
+    const defs = `<defs>${ACCUMULATION_SERIES.map((s, k) => `
+      <pattern id="hatch-${k + 1}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" fill="var(${s.varName})"></rect>
+        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--panel)" stroke-width="2.2"></line>
+      </pattern>`).join("")}</defs>`;
+
+    let bars = "";
+    let xLabels = "";
+    const lastIdx = ACCUMULATION_SERIES.length - 1;
+    rows.forEach((r, i) => {
+      const bandX = margin.left + i * bandWidth;
+      const barX = bandX + (bandWidth - barWidth) / 2;
+      const { boundaries, capped } = stacks[i];
+      let segHTML = "";
+      for (let k = 0; k <= lastIdx; k++) {
+        const val0 = boundaries[k], val1 = boundaries[k + 1];
+        if (val1 <= val0) continue; // zero-height segment, nothing to draw
+        let yTop = scaleY(val1);
+        let yBottom = scaleY(val0);
+        if (k < lastIdx) yTop += 1;      // inset shared boundary with segment above
+        if (k > 0) yBottom -= 1;         // inset shared boundary with segment below
+        const segHeight = Math.max(0, yBottom - yTop);
+        if (segHeight <= 0) continue;
+        const color = capped[ACCUMULATION_SERIES[k].key] ? `url(#hatch-${k + 1})` : `var(${ACCUMULATION_SERIES[k].varName})`;
+        if (k === lastIdx) {
+          const r4 = Math.min(4, segHeight, barWidth / 2);
+          segHTML += `<path d="M ${barX + r4} ${yTop} H ${barX + barWidth - r4} A ${r4} ${r4} 0 0 1 ${barX + barWidth} ${yTop + r4} V ${yTop + segHeight} H ${barX} V ${yTop + r4} A ${r4} ${r4} 0 0 1 ${barX + r4} ${yTop} Z" fill="${color}"></path>`;
+        } else {
+          segHTML += `<rect x="${barX}" y="${yTop.toFixed(1)}" width="${barWidth}" height="${segHeight.toFixed(1)}" fill="${color}"></rect>`;
+        }
+      }
+      const topY = scaleY(boundaries[lastIdx + 1]);
+      const hitHeight = baselineY - margin.top;
+      bars += `<g class="chart-hit" tabindex="0" role="img"
+          aria-label="Period ${r.label}, ${fmtDate(r.date)}: cumulative 401(k) and HSA ${fmtUSD0(boundaries[lastIdx + 1])}"
+          data-idx="${i}">
+        <rect x="${bandX}" y="${margin.top}" width="${bandWidth}" height="${hitHeight}" fill="transparent"></rect>
+        ${segHTML}
+        <rect class="hover-outline" x="${barX - 1}" y="${(topY - 1).toFixed(1)}" width="${barWidth + 2}" height="${(baselineY - topY + 2).toFixed(1)}" fill="none" stroke="var(--text-dim)" stroke-width="1"></rect>
+      </g>`;
+
+      if (i === rows.length - 1) {
+        xLabels += `<text class="total-label" x="${(barX + barWidth / 2).toFixed(1)}" y="${(topY - 8).toFixed(1)}" text-anchor="middle">${fmtUSD0(boundaries[lastIdx + 1])}</text>`;
+      }
+      xLabels += `<text x="${(bandX + bandWidth / 2).toFixed(1)}" y="${baselineY + 14}" text-anchor="middle">${r.label}</text>`;
+    });
+
+    const svg = document.getElementById("accum-chart");
+    const wrap = document.getElementById("accum-chart-wrap");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+    svg.innerHTML = defs + gridlines + bars + xLabels;
+    wrap.style.minWidth = width + "px";
+
+    attachChartTooltip(svg, wrap, rows, stacks);
+  }
+
+  function attachChartTooltip(svg, wrap, rows, stacks) {
+    const tooltip = document.getElementById("chart-tooltip");
+    const lastIdx = ACCUMULATION_SERIES.length - 1;
+
+    function showTooltip(idx, clientX, clientY) {
+      const r = rows[idx];
+      const { boundaries, capped } = stacks[idx];
+      const rowsHtml = ACCUMULATION_SERIES.map((s, k) => {
+        const val = boundaries[k + 1] - boundaries[k];
+        const maxedTag = capped[s.key] ? `<em class="tt-maxed">maxed</em>` : "";
+        return `<div class="tt-row"><span class="tt-key"><span class="line" style="background:var(${s.varName})"></span>${s.label}${maxedTag}</span><span class="tt-val">${fmtUSD(val)}</span></div>`;
+      }).join("");
+      const total = boundaries[lastIdx + 1];
+      tooltip.innerHTML = `<div class="tt-title">Period ${r.label} — ${fmtDate(r.date)}</div>${rowsHtml}<div class="tt-total"><span>Cumulative total</span><span>${fmtUSD(total)}</span></div>`;
+      tooltip.classList.add("visible");
+      const wrapRect = wrap.getBoundingClientRect();
+      let left = clientX - wrapRect.left + 14;
+      let top = clientY - wrapRect.top - 14;
+      const maxLeft = wrapRect.width - 230;
+      if (left > maxLeft) left = clientX - wrapRect.left - 244;
+      tooltip.style.left = left + "px";
+      tooltip.style.top = Math.max(0, top) + "px";
+    }
+    function hideTooltip() { tooltip.classList.remove("visible"); }
+
+    svg.querySelectorAll(".chart-hit").forEach(g => {
+      const idx = parseInt(g.dataset.idx, 10);
+      g.addEventListener("pointermove", e => showTooltip(idx, e.clientX, e.clientY));
+      g.addEventListener("pointerenter", e => showTooltip(idx, e.clientX, e.clientY));
+      g.addEventListener("pointerleave", hideTooltip);
+      g.addEventListener("focus", () => {
+        const rect = g.querySelector("rect").getBoundingClientRect();
+        showTooltip(idx, rect.left + rect.width / 2, rect.top);
+      });
+      g.addEventListener("blur", hideTooltip);
+    });
+  }
+
+  function renderHints() {
+    const tax = state.tax, inputs = state.inputs;
+    const hsaLim = hsaLimitFor(inputs, tax);
+    const hsaTotal = inputs.hsaPerPaycheck * PAY_PERIODS + inputs.employerHsaAnnual;
+    document.getElementById("hsa-limit-hint").textContent =
+      `Annual IRS limit for ${inputs.hsaCoverage}${inputs.employeeAge >= 55 ? " + age 55 catch-up" : ""}: ${fmtUSD0(hsaLim)}. Currently electing ${fmtUSD0(hsaTotal)}/yr (incl. employer/wellness).`;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Main                                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  function recalcAndRender() {
+    const result = computeAll(state.inputs, state.tax);
+    renderSummary(result.summary);
+    renderDetailTable(result.rows);
+    renderAccumulationChart(result.rows);
+    renderHints();
+    document.getElementById("match-max-hint").textContent =
+      "Maximum possible match this year (at your age): " + fmtUSD(result.summary.maxPossibleMatchThisYear);
+    saveState();
+  }
+
+  function populateAllControls() {
+    populateScalarBindings(SCALAR_BINDINGS, state.inputs);
+    populateScalarBindings(TAX_SCALAR_BINDINGS, state.tax);
+    buildRSUInputTable();
+    buildMatchTable();
+    buildBracketTables();
+  }
+
+  function init() {
+    const loaded = loadState();
+    if (loaded) state = loaded;
+
+    populateAllControls();
+    recalcAndRender();
+
+    document.getElementById("btn-recalc").addEventListener("click", recalcAndRender);
+    document.getElementById("btn-reset").addEventListener("click", () => {
+      state = { inputs: defaultInputs(), tax: defaultTaxTables() };
+      populateAllControls();
+      recalcAndRender();
+    });
+    document.getElementById("btn-clear-storage").addEventListener("click", () => {
+      try { localStorage.removeItem("paycheckCalc.state.v1"); } catch (e) { /* ignore */ }
+      alert("Saved inputs cleared. Reload the page to start from the built-in example.");
+    });
+    document.getElementById("chk-show-all-cols").addEventListener("change", e => {
+      showAllColumns = e.target.checked;
+      recalcAndRender();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>
