@@ -104,6 +104,7 @@
   .panel-2 { background: var(--panel-2); }
 
   fieldset { border:1px solid var(--border); border-radius:8px; padding:10px 12px 12px; margin:0 0 12px; }
+  details.subpanel { border:1px solid var(--border); border-radius:8px; padding:4px 12px 8px; margin:0 0 12px; }
   legend { font-size:12px; font-weight:600; color: var(--text-dim); padding:0 4px; }
 
   .field { display:flex; align-items:center; gap:8px; margin:6px 0; }
@@ -211,7 +212,7 @@
     <!-- ============ INPUTS COLUMN ============ -->
     <div>
       <div class="panel">
-        <h2>Employee &amp; Pay</h2>
+        <h2>Compensation</h2>
         <fieldset>
           <legend>Basics</legend>
           <div class="field"><label>Filing status</label><div class="ctrl cell-blue">
@@ -227,9 +228,16 @@
           <div class="hint">Biweekly pay (26 periods/year) is the only cadence this model supports — each check is dated 14 days after the last.</div>
           <div class="field"><label>First pay date of the year</label><div class="ctrl cell-blue"><input id="in-firstPayDate" type="date"></div></div>
           <div class="field"><label>Employee age (as of 12/31)</label><div class="ctrl cell-blue"><input id="in-employeeAge" type="number" step="1" min="0"></div></div>
-          <div class="field"><label>Catch-up must be Roth?</label><div class="ctrl cell-blue">
-            <select id="in-catchupMustBeRoth"><option value="Yes">Yes</option><option value="No">No</option></select>
-          </div></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Year-end cash bonus</legend>
+          <p class="hint">Modeled as its own off-cycle check, inserted the day after the 2nd-to-last regular paycheck.</p>
+          <div class="field"><label>Bonus amount ($)</label><div class="ctrl cell-blue"><input id="in-bonusAmount" type="number" step="1"></div></div>
+          <div class="field"><label>Bonus NQDC withholding (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusNqdcPct" type="number" step="1"></div></div>
+          <div class="field"><label>Bonus traditional 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusTradPct" type="number" step="1"></div></div>
+          <div class="field"><label>Bonus Roth 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusRothPct" type="number" step="1"></div></div>
+          <div class="field"><label>Bonus after-tax 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusAfterTaxPct" type="number" step="1"></div></div>
         </fieldset>
 
         <fieldset>
@@ -242,9 +250,7 @@
         <h2>Deductions per Paycheck</h2>
         <fieldset>
           <legend>Pre-tax</legend>
-          <div class="field"><label>Traditional 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-trad401kPct" type="number" step="0.1"></div></div>
-          <div class="field"><label>Roth 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-roth401kPct" type="number" step="0.1"></div></div>
-          <div class="field"><label>401(k) elective deferral IRS limit ($)</label><div class="ctrl cell-yellow"><input id="in-electiveLimit" type="number" step="50"></div></div>
+          <div class="field"><label>NQDC deferral (% of gross pay)</label><div class="ctrl cell-blue pct-wrap"><input id="in-nqdcPct" type="number" step="0.1"></div></div>
           <div class="field"><label>HSA coverage type</label><div class="ctrl cell-blue">
             <select id="in-hsaCoverage"><option>Self-only</option><option>Family</option></select>
           </div></div>
@@ -260,24 +266,33 @@
       </div>
 
       <div class="panel">
-        <h2>NQDC &amp; Advanced 401(k)</h2>
-        <div class="field"><label>NQDC deferral (% of gross pay)</label><div class="ctrl cell-blue pct-wrap"><input id="in-nqdcPct" type="number" step="0.1"></div></div>
-        <div class="field"><label>401(k) after-tax elected (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-afterTax401kPct" type="number" step="0.1"></div></div>
-        <h3>401(k) overflow handling</h3>
-        <div class="field"><label>Spill excess contributions to after-tax 401(k)?</label><div class="ctrl cell-blue">
-          <select id="in-spillover"><option value="Yes">Yes</option><option value="No">No</option></select>
-        </div></div>
-      </div>
-
-      <div class="panel">
-        <h2>Employer 401(k) Match (Tiered)</h2>
-        <p class="hint">Applies to cumulative Traditional + Roth regular AND catch-up contributions combined, in order.</p>
-        <table class="mini" id="match-table">
-          <thead><tr><th>Bracket</th><th>Width ($)</th><th>Match rate</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div class="field"><label>Bracket 4 rate (thereafter, up to your limit)</label><div class="ctrl cell-blue pct-wrap"><input id="in-matchRate4" type="number" step="1"></div></div>
-        <div class="hint" id="match-max-hint"></div>
+        <h2>401(k)</h2>
+        <fieldset>
+          <legend>Employee contributions</legend>
+          <div class="field"><label>Traditional 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-trad401kPct" type="number" step="0.1"></div></div>
+          <div class="field"><label>Roth 401(k) (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-roth401kPct" type="number" step="0.1"></div></div>
+          <div class="field"><label>401(k) elective deferral IRS limit ($)</label><div class="ctrl cell-yellow"><input id="in-electiveLimit" type="number" step="50"></div></div>
+          <div class="field"><label>401(k) after-tax elected (% of gross − NQDC)</label><div class="ctrl cell-blue pct-wrap"><input id="in-afterTax401kPct" type="number" step="0.1"></div></div>
+          <div class="field"><label>Catch-up must be Roth?</label><div class="ctrl cell-blue">
+            <select id="in-catchupMustBeRoth"><option value="Yes">Yes</option><option value="No">No</option></select>
+          </div></div>
+        </fieldset>
+        <fieldset>
+          <legend>Overflow handling</legend>
+          <div class="field"><label>Spill excess contributions to after-tax 401(k)?</label><div class="ctrl cell-blue">
+            <select id="in-spillover"><option value="Yes">Yes</option><option value="No">No</option></select>
+          </div></div>
+        </fieldset>
+        <details class="subpanel">
+          <summary>Employer match (tiered)</summary>
+          <p class="hint">Applies to cumulative Traditional + Roth regular AND catch-up contributions combined, in order.</p>
+          <table class="mini" id="match-table">
+            <thead><tr><th>Bracket</th><th>Width ($)</th><th>Match rate</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="field"><label>Bracket 4 rate (thereafter, up to your limit)</label><div class="ctrl cell-blue pct-wrap"><input id="in-matchRate4" type="number" step="1"></div></div>
+          <div class="hint" id="match-max-hint"></div>
+        </details>
       </div>
 
       <div class="panel">
@@ -295,16 +310,6 @@
           <thead><tr><th>Quarter</th><th>Vest value ($)</th><th>Vest date</th></tr></thead>
           <tbody></tbody>
         </table>
-      </div>
-
-      <div class="panel">
-        <h2>Year-End Cash Bonus</h2>
-        <p class="hint">Modeled as its own off-cycle check, inserted the day after the 2nd-to-last regular paycheck.</p>
-        <div class="field"><label>Bonus amount ($)</label><div class="ctrl cell-blue"><input id="in-bonusAmount" type="number" step="1"></div></div>
-        <div class="field"><label>Bonus NQDC withholding (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusNqdcPct" type="number" step="1"></div></div>
-        <div class="field"><label>Bonus traditional 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusTradPct" type="number" step="1"></div></div>
-        <div class="field"><label>Bonus Roth 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusRothPct" type="number" step="1"></div></div>
-        <div class="field"><label>Bonus after-tax 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusAfterTaxPct" type="number" step="1"></div></div>
       </div>
 
       <details class="panel">
@@ -1165,10 +1170,10 @@
     { key: "H", label: "Cum. Elective YTD", group: "Regular 401(k)", essential: true },
     { key: "I", label: "Overflow", group: "Regular 401(k)", essential: false },
 
-    { key: "J", label: "Catch-Up", group: "Catch-Up 401(k)", essential: false },
-    { key: "K", label: "— CU Traditional", group: "Catch-Up 401(k)", essential: false },
-    { key: "L", label: "— CU Roth", group: "Catch-Up 401(k)", essential: false },
-    { key: "M", label: "Cum. Catch-Up YTD", group: "Catch-Up 401(k)", essential: false },
+    { key: "J", label: "Catch-Up", group: "Catch-Up 401(k)", essential: true },
+    { key: "K", label: "— CU Traditional", group: "Catch-Up 401(k)", essential: true },
+    { key: "L", label: "— CU Roth", group: "Catch-Up 401(k)", essential: true },
+    { key: "M", label: "Cum. Catch-Up YTD", group: "Catch-Up 401(k)", essential: true },
 
     { key: "N", label: "Spillover", group: "After-Tax 401(k) & Match", essential: false },
     { key: "O", label: "Employer Match", group: "After-Tax 401(k) & Match", essential: true },
@@ -1217,7 +1222,10 @@
 
   function renderDetailTable(rows) {
     const table = document.getElementById("detail-table");
-    const cols = withGroupRuns((showAllColumns ? DETAIL_COLS : DETAIL_COLS.filter(c => c.essential)));
+    // Hide the catch-up group entirely when no catch-up is contributed this year.
+    const hasCatchup = rows.some(r => (r.J || 0) > 0);
+    const cols = withGroupRuns(DETAIL_COLS.filter(c =>
+      (showAllColumns || c.essential) && (hasCatchup || c.group !== "Catch-Up 401(k)")));
 
     const groupRow = [];
     for (const col of cols) {
