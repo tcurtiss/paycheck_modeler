@@ -22,7 +22,7 @@ node test.js
 
 Workflow when editing `paycheck_calculator.html`:
 
-1. **Run `test.js`** (29 tests, including deterministic 500-run engine and 100-run Maximize fuzz suites) to verify syntax, 2027 baselines (Flat and Aggregate), the anonymized 2026 paystub vector (`testdata/paystubs-2026.json`, every check and vest compared column by column), per-row accounting invariants (`C - deductions - AI === AO`, `R <= eff415cLimit`), `CUT_ORDER` non-resurrection, `planMaximize()` invariants, 27-payday years, `validateInputs()`, `normalizeState()`, `taxIsModified()`, `updateToCurrentTaxYear()`, and CSV export. Add new test cases to `test.js` whenever fixing a bug or adding a rule.
+1. **Run `test.js`** (32 tests, including deterministic 500-run engine and 100-run Maximize fuzz suites) to verify syntax, 2027 baselines (Flat and Aggregate), the anonymized 2026 paystub vector (`testdata/paystubs-2026.json`, every check and vest compared column by column), per-row accounting invariants (`C - deductions - AI === AO`, `R <= eff415cLimit`), `CUT_ORDER` non-resurrection, `planMaximize()` invariants, 27-payday years, `validateInputs()`, `normalizeState()`, `taxIsModified()`, `updateToCurrentTaxYear()`, and CSV export. Add new test cases to `test.js` whenever fixing a bug or adding a rule.
 2. **How `test.js` hooks into the IIFE:** `test.js` extracts `<script>...</script>` and replaces the final `document.addEventListener("DOMContentLoaded", init);` line with an export shim (`globalThis.__PAYCALC`). Do not remove or alter that final listener line.
 3. **Browser/DOM verification:** For UI/DOM changes, test in a real browser (or headless Chrome / `puppeteer-core` listening for `pageerror`/`console` events) — `test.js` only exercises pure JS functions, not DOM wiring.
 4. **2027 baseline invariants:** With the default 2027 inputs:
@@ -32,7 +32,7 @@ Workflow when editing `paycheck_calculator.html`:
 
 ## Architecture Quick Map
 
-Everything lives in `paycheck_calculator.html` (`<style>` with light fallback + `@supports` CSS `light-dark()` theme tokens, HTML inputs/outputs + `<dialog id="maximize-dialog">`, and one `<script>` IIFE). Key subsystems (see [DESIGN.md](DESIGN.md) for full details):
+Everything lives in `paycheck_calculator.html` (`<style>` with light fallback, `@supports` CSS `light-dark()` tokens, and matching `@supports not` dark fallback, HTML inputs/outputs + `<dialog id="maximize-dialog">`, and one `<script>` IIFE). Key subsystems (see [DESIGN.md](DESIGN.md) for full details):
 
 - **Defaults:** `TAX_YEAR`, `defaultInputs()`, `defaultTaxTables()` (all IRS/SSA constants live here, never in `inputs`; read the comment block above `defaultTaxTables()` before a tax-year update).
 - **Engine (`computeAll`):** Pure function returning `{ rows, rsuRows, nqdcPayoutRows, summary }`. Walks all events (`pay`, `bonus`, `rsu`, `payout`) chronologically with shared YTD `prev`. Variable names `C`–`AS` inside `buildRow()` map 1:1 to the source spreadsheet (plus `AT` SDI with independent `stateSdiTaxesHsa`, `AU` Health FSA, `AV` Dep.-Care FSA). Enforces `eff415cLimit` (`min(tax.limit415c, totalComp415)`) on regular 401(k), match, and after-tax (flagging `s415cCrowdDate` if 401(k)/match is cut off); enforces `$0` take-home floor via `CUT_ORDER` with `zeroed` non-resurrection tracking; reads `CHANGEABLE` fields exclusively via `electionsAt(date)`.

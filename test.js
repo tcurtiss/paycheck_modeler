@@ -27,7 +27,7 @@ const injected = match[1].replace(
     defaultInputs, defaultTaxTables,
     computeAll, validateInputs, normalizeState, planMaximize,
     nqdcPayoutOccurrences, detailCSV, paydaysInYear, addMonths,
-    taxIsModified, isNewerSchema, electionAt,
+    taxIsModified, isNewerSchema, electionAt, milestoneLong,
     getState: () => state,
     setState: s => { state = s; },
     updateToCurrentTaxYear,
@@ -562,6 +562,53 @@ test("normalizeState resets election steps that aren't dropdown choices", () => 
   assert(st.inputs.plan401kStep === 0.01 && st.inputs.esppStep === 0.01, "unsupported steps fall back to 1%");
   const ok = pc.normalizeState({ inputs: { ...pc.defaultInputs(), plan401kStep: 0.0001, esppStep: 0.001 }, tax: pc.defaultTaxTables() });
   assert(ok.inputs.plan401kStep === 0.0001 && ok.inputs.esppStep === 0.001, "supported steps are kept");
+});
+
+test("validateInputs checks age 65+ tax settings and NQDC payout years", () => {
+  const inp = pc.defaultInputs();
+  inp.nqdcPayouts = [
+    { amount: 10000, firstDate: "2027-01-15", years: -2 },
+    { amount: 10000, firstDate: "2027-01-15", years: 0 },
+  ];
+  const tax = pc.defaultTaxTables();
+  tax.addlStdDeduction65["Married Filing Jointly"] = -500;
+  tax.seniorDeductionPhaseoutStart["Married Filing Jointly"] = -1000;
+  const v = pc.validateInputs(inp, tax);
+  assert(v.errors.some(e => e.id === "in-addl65MFJ"), "expected in-addl65MFJ error");
+  assert(v.errors.some(e => e.id === "in-seniorStartMFJ"), "expected in-seniorStartMFJ error");
+  assert(v.errors.some(e => e.id === "nqdc-0-years"), "expected nqdc-0-years error for negative years");
+  assert(v.warnings.some(w => w.id === "nqdc-1-years"), "expected nqdc-1-years warning for 0 years");
+  // Single/HoH map to in-addl65Single and in-seniorStartSingle; MFS skips seniorStart.
+  inp.filingStatus = "Single";
+  tax.addlStdDeduction65["Single"] = -1;
+  tax.seniorDeductionPhaseoutStart["Single"] = -1;
+  const vS = pc.validateInputs(inp, tax);
+  assert(vS.errors.some(e => e.id === "in-addl65Single"), "expected in-addl65Single error");
+  assert(vS.errors.some(e => e.id === "in-seniorStartSingle"), "expected in-seniorStartSingle error");
+});
+
+test("bonusState and bonusSdi are tracked separately in summary", () => {
+  const inp = pc.defaultInputs();
+  inp.stateTaxRate = 0.05;
+  inp.stateSdiRate = 0.012;
+  inp.stateSdiWageCap = 0;
+  inp.bonuses = [{ amount: 10000, date: "2027-06-15" }];
+  inp.bonusAfterTaxPct = 0;
+  const res = pc.computeAll(inp, pc.defaultTaxTables());
+  assertClose(res.summary.bonusState, 500, "bonusState should be income tax only");
+  assertClose(res.summary.bonusSdi, 120, "bonusSdi should be SDI only");
+});
+
+test("milestoneLong reflects customized tax settings", () => {
+  const customTax = pc.defaultTaxTables();
+  customTax.addlMedicareThreshold = 250000;
+  customTax.addlMedicareRate = 0.011;
+  customTax.suppThreshold = 1500000;
+  customTax.suppRateHigh = 0.396;
+  customTax.esppIrsLimit = 30000;
+  assert(pc.milestoneLong("addlMed", customTax).includes("$250,000") && pc.milestoneLong("addlMed", customTax).includes("1.1%"), "addlMed uses custom tax");
+  assert(pc.milestoneLong("supp1M", customTax).includes("$1,500,000") && pc.milestoneLong("supp1M", customTax).includes("39.6%"), "supp1M uses custom tax");
+  assert(pc.milestoneLong("esppIrs", customTax).includes("$30,000"), "esppIrs uses custom tax");
 });
 
 test("fuzz: 500 randomized engine scenarios satisfy all invariants", () => {

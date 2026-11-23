@@ -1,6 +1,6 @@
 # Paycheck Modeling Calculator
 
-A single-file, in-browser calculator that models a full year of biweekly paychecks — take-home pay, 401(k) (Traditional, Roth, catch-up, after-tax, and employer match), NQDC deferrals and payouts, HSA, FSAs, ESPP, RSU vests, cash bonuses, and federal, FICA, and state withholding.
+A single-file, in-browser calculator that models a full year of biweekly paychecks — take-home pay, 401(k) (Traditional, Roth, catch-up, after-tax, and employer match), NQDC deferrals and payouts, HSA, FSAs, ESPP, RSU vests, cash bonuses, and federal, FICA, state, and state disability/family-leave withholding.
 
 Everything runs locally in your browser. There is no server, no account, no build step, and nothing you enter is sent anywhere.
 
@@ -16,7 +16,7 @@ Everything runs locally in your browser. There is no server, no account, no buil
    - Use the **pill bar** at the top of the inputs column to jump directly to any section (on small screens it also includes a **Results ↓** jump link).
    - Click any section heading to **collapse or expand** it (your collapsed sections are remembered).
    - While scrolled down through inputs, a slim **sticky summary bar** appears at the bottom of the window to keep headline numbers in view.
-   - Use **Theme: Auto / Light / Dark** in the top-right corner to switch colors.
+   - Use **Undo**, **Redo**, and **Theme: Auto / Light / Dark** in the top-right corner at any time.
 4. **Auto-save & Privacy:** Inputs save automatically to your browser's `localStorage` by default. If you share a browser profile (note that Chrome shares one `localStorage` area across all local `file://` pages), uncheck **Auto-save inputs in this browser** under **Scenario** to turn auto-save off and clear stored inputs.
 
 ---
@@ -63,8 +63,8 @@ Everything runs locally in your browser. There is no server, no account, no buil
 ## Using the Planning Tools
 
 ### At a Glance & Pinning a Baseline
-- The top tiles show **Take-home pay**, **Typical paycheck** (median regular check + range), **Saved this year**, **Effective tax rate** (as % of W-2 wages, with % of total gross in the subtitle), and **Tax at filing** (estimated balance due or refund, with a per-check W-4 Step 4(c) suggestion if you owe — divided across remaining checks when partway through the year).
-- Below the tiles, **Take-home changes when** lists the exact dates your paycheck changes as you hit Social Security, Additional Medicare, 401(k), HSA, FSA, SDI, or ESPP thresholds.
+- The top tiles show **Take-home pay**, **Typical paycheck** (median regular check + range), **Saved this year**, **Effective tax rate** (as % of W-2 wages, with % of total gross in the subtitle), and **Federal tax at filing** (estimated balance due or refund, with a per-check W-4 Step 4(c) suggestion if you owe — divided across remaining checks when partway through the year).
+- Below the tiles, **Take-home changes when** lists the exact dates your paycheck changes as you hit Social Security, Additional Medicare, 401(k), HSA, FSA, SDI, or ESPP thresholds — click any pill to jump straight to that paycheck or RSU card.
 - Click **Pin as baseline** before experimenting with an input — every tile then shows `▲ / ▼` deltas against your pinned snapshot.
 
 ### Maximize… (Contribution Optimizer)
@@ -81,14 +81,14 @@ Under **Scenario** (bottom of the inputs column):
 - **Load / Compare / Export / Delete:** Load a saved scenario, compare it **side by side** against your current inputs in the At a Glance panel, or export it as `.json`.
 - **Export / Import scenario:** Save your current inputs and tax settings to a `.json` file for backup or sharing across browsers/devices.
 - **Reset to example:** Restores the built-in example inputs.
-- **Undo & Redo:** Multi-level **Undo** and **Redo** buttons under **Scenario** (and `Ctrl+Z` / `Cmd+Z` outside text fields) work for ordinary edits as well as Reset, Import, Load, Maximize, and Tax-Year Update.
+- **Undo & Redo:** Multi-level **Undo** and **Redo** buttons in the header and under **Scenario** (plus `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, and `Ctrl+Y` outside text fields) work for ordinary edits as well as Reset, Import, Load, Maximize, and Tax-Year Update.
 - **Auto-save toggle:** Uncheck **Auto-save inputs in this browser** to keep your data strictly in memory and erase any previously stored inputs from `localStorage`.
 
 ---
 
 ## Reading the Charts, Summary & Detail Table
 
-- **Where Each Paycheck Goes:** Stacked bar chart of every check's gross pay (including bonuses and NQDC payouts), split into taxes, retirement, NQDC, ESPP/other, and take-home pay (hatched on top). Diamonds (`◆`) mark checks where a limit or wage base is reached.
+- **Where Each Paycheck Goes:** Stacked bar chart of every check's gross pay (including bonuses and NQDC payouts, with a **Regular checks only** toggle to hide bonus/payout spikes), split into taxes, retirement, NQDC, ESPP/other, and take-home pay (hatched on top). Diamonds (`◆`) mark checks where a limit or wage base is reached.
 - **Cumulative 401(k) & HSA Through the Year:** Stacked running total of each 401(k) source, employer match, and HSA. Segments switch to a **hatched fill** once that source hits its annual limit.
 - **Chart interaction:** Hover over any bar — or Tab into a chart and use **Left / Right / Home / End** arrow keys — to inspect exact dollar breakdowns. Click (or press Enter/Space; on touch screens, tap once to preview and tap again to jump) to scroll straight to that paycheck in the detail table.
 - **Annual Summary cards:** Full-year paycheck breakdown, federal tax-at-filing estimate, estimated **W-2 boxes** (Boxes 1–6, 10, 11, 12 D/AA/W, 14, 16, 17), Retirement/HSA/FSA limits, Bonuses, RSU vests, NQDC payouts, ESPP purchases, and Total Tax Withheld.
