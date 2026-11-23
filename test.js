@@ -102,7 +102,7 @@ test("2027 baseline (Aggregate bonus withholding)", () => {
   const res = pc.computeAll(inp, tax);
   assertClose(res.summary.netPay, 83648.96, "netPay");
   const bonusRow = res.rows.find(r => r.isBonus);
-  assertClose(bonusRow.deductionCuts.Q, 2471.62, "bonus after-tax cut (aggregate)");
+  assertClose(bonusRow.deductionCuts.Q, 4021.37, "bonus after-tax cut (aggregate)");
   checkRowInvariants(res, tax, "baseline-agg");
 });
 
@@ -449,7 +449,121 @@ test("detailCSV generates valid RFC 4180 CSV with accurate headers, values, and 
   assert(bonusLine.includes('"'), "bonus line with comma-containing reduction notes should be RFC-4180 quoted");
 });
 
+// Paystub-derived test vector: an anonymized version of a real 2026 pay year
+// (see the notes in testdata/paystubs-2026.json). Checks every check's amounts
+// against the stored rows, and the payroll rules the real stubs showed.
+test("2026 paystub vector: every check matches, and the rules seen on real stubs hold", () => {
+  const vec = JSON.parse(isNode
+    ? require("fs").readFileSync("testdata/paystubs-2026.json", "utf8")
+    : readFile("testdata/paystubs-2026.json"));
+  const tax = pc.defaultTaxTables();
+  for (const [k, v] of Object.entries(vec.taxOverrides)) {
+    tax[k] = v && typeof v === "object" && !Array.isArray(v) ? Object.assign({}, tax[k], v) : v;
+  }
+  const inp = Object.assign(pc.defaultInputs(), JSON.parse(JSON.stringify(vec.inputs)));
+  const v = pc.validateInputs(inp, tax);
+  assert(v.errors.length === 0, `vector inputs should validate: ${v.errors.map(e => e.msg).join("; ")}`);
+  const res = pc.computeAll(inp, tax);
+  const iso = d => d.toISOString().slice(0, 10);
+
+  const compare = (actualRows, expectedRows, cols, rowKey, label) => {
+    assert(actualRows.length === expectedRows.length, `${label}: expected ${expectedRows.length} rows, got ${actualRows.length}`);
+    expectedRows.forEach((exp, i) => {
+      const r = actualRows[i];
+      cols.forEach((col, j) => {
+        if (col === "kind") assert(r.kind === exp[j], `${label} row ${i}: kind ${r.kind} != ${exp[j]}`);
+        else if (col === "date") assert(iso(r.date) === exp[j], `${label} row ${i}: date ${iso(r.date)} != ${exp[j]}`);
+        else assertClose(r[col], exp[j], `${label} ${rowKey(exp)} ${col}`, 0.006);
+      });
+    });
+  };
+  compare(res.rows, vec.rows, vec.rowColumns, e => `${e[0]} ${e[1]}`, "check");
+  compare(res.rsuRows, vec.rsuRows, vec.rsuColumns, e => `RSU ${e[0]}`, "vest");
+
+  // Rules the real stubs showed, independent of the stored numbers.
+  const pay = res.rows.filter(r => r.kind === "pay");
+  const sum = (rows, f) => rows.reduce((t, r) => t + f(r), 0);
+  const perCheck = inp.annualSalary / 26;
+  for (const r of pay) {
+    assertClose(r.S, perCheck * inp.nqdcPct, `${iso(r.date)} NQDC is a % of gross`);
+    if (r.F > 0 && sum(pay.filter(p => p.date <= r.date), p => p.F) < tax.electiveLimit - 0.01) {
+      assertClose(r.F, (perCheck - r.S) * inp.trad401kPct, `${iso(r.date)} 401(k) is a % of gross − NQDC`);
+    }
+    if (r.Q > 0) assert(sum(pay.filter(p => p.date <= r.date), p => p.L) >= tax.catchup5059 - 0.01,
+      `${iso(r.date)} after-tax spillover only after catch-up is full`);
+    if (r.F + r.G + r.K + r.L === 0) assert(r.O === 0, `${iso(r.date)} no match on after-tax spillover`);
+  }
+  assertClose(sum(pay, r => r.F), tax.electiveLimit, "pre-tax 401(k) reaches the limit");
+  assert(sum(pay, r => r.K) === 0, "catch-up is forced to Roth (prior-year wages over the threshold)");
+  assertClose(sum(pay, r => r.L), tax.catchup5059, "Roth catch-up reaches its limit");
+  assert(pay.some(r => r.F > 0 && r.L > 0), "the 401(k) limit is reached partway through a check");
+  assertClose(sum(pay, r => r.T), tax.hsaLimit.Family + tax.hsaCatchup55 - inp.employerHsaAnnual,
+    "HSA stops at the family limit + 55 catch-up, less employer money");
+  assertClose(sum(res.rows, r => r.AE) + sum(res.rsuRows, r => r.F), tax.ssWageBase * tax.ssRate,
+    "Social Security stops at the wage base across checks and vests");
+  const firstAddl = pay.find(r => r.AG > 0);
+  assert(firstAddl && firstAddl.AG < firstAddl.W * tax.addlMedicareRate, "Additional Medicare starts partway through a check");
+  checkRowInvariants(res, tax, "paystubs-2026");
+});
+
 // 18. Deterministic randomized fuzz suite (engine + Maximize)
+test("Aggregate bonus uses the IRS Pub. 15 aggregate method and skips W-4 Step 4(c)", () => {
+  const tax = pc.defaultTaxTables();
+  const status = "Married Filing Jointly";
+  const brackets = tax.brackets[status];
+  // Independent Pub. 15-T biweekly withholding on W (no other W-4 entries).
+  const wh = W => {
+    const taxable = Math.max(0, W * 26 - tax.standardDeduction[status]);
+    let t = 0;
+    for (let i = 0; i < brackets.length; i++) {
+      const lo = brackets[i].over, hi = i + 1 < brackets.length ? brackets[i + 1].over : Infinity;
+      if (taxable > lo) t += (Math.min(taxable, hi) - lo) * brackets[i].rate;
+    }
+    return t / 26;
+  };
+  const inp = pc.defaultInputs();
+  inp.bonusWithholding = "Aggregate";
+  inp.bonusAfterTaxPct = 0;
+  inp.bonuses = [{ amount: 3000, date: "2027-06-11" }, { amount: 5000, date: "2027-01-05" }];
+  inp.addlFedWithholding = 100;
+  const res = pc.computeAll(inp, tax);
+  const juneBonus = res.rows.find(r => r.isBonus && r.date.getMonth() === 5);
+  const lastPay = res.rows.filter(r => r.kind === "pay" && r.date <= juneBonus.date).pop();
+  assertClose(juneBonus.AC, wh(lastPay.W + juneBonus.W) - wh(lastPay.W), "June bonus aggregate withholding");
+  assert(juneBonus.AD === 0, "Step 4(c) extra withholding must not repeat on a bonus check");
+  assert(lastPay.AD === 100, "Step 4(c) still applies to the regular check");
+  // A bonus before the first payday has no regular check to combine with.
+  const janBonus = res.rows.find(r => r.isBonus && r.date.getMonth() === 0);
+  assertClose(janBonus.AC, wh(janBonus.W), "bonus before the first payday");
+  checkRowInvariants(res, tax, "aggregate-irs");
+});
+
+test("ESPP setup is validated when only a mid-year change turns ESPP on, and Maximize won't plan without it", () => {
+  const tax = pc.defaultTaxTables();
+  const inp = pc.defaultInputs();
+  inp.esppPct = 0;
+  inp.esppStart = "";
+  inp.changes = [{ date: "2027-07-02", field: "esppPct", value: 0.05 }];
+  const v = pc.validateInputs(inp, tax);
+  assert(v.errors.some(e => e.id === "in-esppStart"), "missing ESPP start must be an error when a change enables ESPP");
+  inp.changes = [];
+  assert(!pc.validateInputs(inp, tax).errors.some(e => e.id === "in-esppStart"), "no error when ESPP is never used");
+  const plan = pc.planMaximize(inp, tax, { items: { espp: true }, strategy: "even", minNet: 0, from: "" });
+  assert(plan.items[0].status === "na", `Maximize ESPP without a start date should be N/A, got ${plan.items[0].status}`);
+  assert(plan.inputs.esppPct === 0, "Maximize must not set an ESPP % it can't apply");
+  inp.esppStart = "2027-01-01";
+  inp.esppMonths = 0;
+  assert(pc.planMaximize(inp, tax, { items: { espp: true }, strategy: "even", minNet: 0, from: "" }).items[0].status === "na",
+    "Maximize ESPP with a 0-month offering period should be N/A");
+});
+
+test("normalizeState resets election steps that aren't dropdown choices", () => {
+  const st = pc.normalizeState({ inputs: { ...pc.defaultInputs(), plan401kStep: 0.005, esppStep: 0.0001 }, tax: pc.defaultTaxTables() });
+  assert(st.inputs.plan401kStep === 0.01 && st.inputs.esppStep === 0.01, "unsupported steps fall back to 1%");
+  const ok = pc.normalizeState({ inputs: { ...pc.defaultInputs(), plan401kStep: 0.0001, esppStep: 0.001 }, tax: pc.defaultTaxTables() });
+  assert(ok.inputs.plan401kStep === 0.0001 && ok.inputs.esppStep === 0.001, "supported steps are kept");
+});
+
 test("fuzz: 500 randomized engine scenarios satisfy all invariants", () => {
   let seed = 12345;
   const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;

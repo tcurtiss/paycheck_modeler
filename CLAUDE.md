@@ -22,12 +22,12 @@ node test.js
 
 Workflow when editing `paycheck_calculator.html`:
 
-1. **Run `test.js`** (25 tests, including deterministic 500-run engine and 100-run Maximize fuzz suites) to verify syntax, 2027 baselines (Flat and Aggregate), per-row accounting invariants (`C - deductions - AI === AO`, `R <= eff415cLimit`), `CUT_ORDER` non-resurrection, `planMaximize()` invariants, 27-payday years, `validateInputs()`, `normalizeState()`, `taxIsModified()`, `updateToCurrentTaxYear()`, and CSV export. Add new test cases to `test.js` whenever fixing a bug or adding a rule.
+1. **Run `test.js`** (29 tests, including deterministic 500-run engine and 100-run Maximize fuzz suites) to verify syntax, 2027 baselines (Flat and Aggregate), the anonymized 2026 paystub vector (`testdata/paystubs-2026.json`, every check and vest compared column by column), per-row accounting invariants (`C - deductions - AI === AO`, `R <= eff415cLimit`), `CUT_ORDER` non-resurrection, `planMaximize()` invariants, 27-payday years, `validateInputs()`, `normalizeState()`, `taxIsModified()`, `updateToCurrentTaxYear()`, and CSV export. Add new test cases to `test.js` whenever fixing a bug or adding a rule.
 2. **How `test.js` hooks into the IIFE:** `test.js` extracts `<script>...</script>` and replaces the final `document.addEventListener("DOMContentLoaded", init);` line with an export shim (`globalThis.__PAYCALC`). Do not remove or alter that final listener line.
 3. **Browser/DOM verification:** For UI/DOM changes, test in a real browser (or headless Chrome / `puppeteer-core` listening for `pageerror`/`console` events) — `test.js` only exercises pure JS functions, not DOM wiring.
 4. **2027 baseline invariants:** With the default 2027 inputs:
    - **Flat bonus withholding (default):** Gross Pay `$270,000.00`, Net Pay `$83,648.96`, Employer Match `$6,225.00`, Bonus check after-tax 401(k) cut `$2,750.00`.
-   - **Aggregate bonus withholding:** Same Net Pay (`$83,648.96`), Bonus check after-tax 401(k) cut `$2,471.62`.
+   - **Aggregate bonus withholding:** Same Net Pay (`$83,648.96`), Bonus check after-tax 401(k) cut `$4,021.37` (IRS Pub. 15 aggregate method: bonus added to the most recent regular check, less that check's withholding).
    - Re-baseline these **only** when updating to a new tax year.
 
 ## Architecture Quick Map

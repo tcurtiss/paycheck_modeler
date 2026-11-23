@@ -59,8 +59,31 @@
       --series-3: light-dark(#1baf7a, #199e70);
       --series-4: light-dark(#eda100, #c98500);
       --series-5: light-dark(#e87ba4, #d55181);
+      /* --series-6 (#008300) is the same in both modes by design (validated palette slot 6). */
       --series-7: light-dark(#4a3aa7, #9085e9);
       --series-8: light-dark(#e34948, #e66767);
+    }
+  }
+  /* Browsers without light-dark(): the same dark values, for "Theme: Dark"
+     and for Auto when the system is dark. Keep in sync with the block above. */
+  @supports not (color: light-dark(white, black)) {
+    :root[data-theme="dark"] {
+      --bg: #1c1b19; --panel: #242320; --panel-2: #2a2926; --border: #3a382f;
+      --text: #eceadf; --text-dim: #a6a191; --accent: #d3944f; --accent-2: #a3b17e;
+      --btn-primary-text: #1c1b19; --blue: #22303f; --blue-border: #35506b;
+      --yellow: #3a331a; --yellow-border: #5c4f27; --neg: #e57373; --pos: #8bc374; --row-alt: #201f1c;
+      --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+      --series-5: #d55181; --series-7: #9085e9; --series-8: #e66767;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1c1b19; --panel: #242320; --panel-2: #2a2926; --border: #3a382f;
+        --text: #eceadf; --text-dim: #a6a191; --accent: #d3944f; --accent-2: #a3b17e;
+        --btn-primary-text: #1c1b19; --blue: #22303f; --blue-border: #35506b;
+        --yellow: #3a331a; --yellow-border: #5c4f27; --neg: #e57373; --pos: #8bc374; --row-alt: #201f1c;
+        --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+        --series-5: #d55181; --series-7: #9085e9; --series-8: #e66767;
+      }
     }
   }
   :root[data-theme="dark"] { color-scheme: dark; }
@@ -254,6 +277,9 @@
   .summary-bar .sb-l { color:var(--text-dim); }
   .summary-bar .sb-v { font-weight:700; font-variant-numeric: tabular-nums; }
   .summary-bar button { padding:4px 10px; }
+  .summary-bar .sb-stale { display:none; font-weight:600; }
+  .summary-bar.is-stale .sb-item { opacity:.4; }
+  .summary-bar.is-stale .sb-stale { display:inline; }
   body.has-summary-bar { padding-bottom:90px; }
 
   /* Collapsible input sections + jump menu */
@@ -356,7 +382,7 @@
             <select id="in-stateSdiTaxesHsa"><option value="No">No</option><option value="Yes">Yes</option></select>
           </div></div>
           <div class="field"><label>Annual salary ($)</label><div class="ctrl cell-blue"><input id="in-annualSalary" type="number" step="100" min="0"></div></div>
-          <div class="hint">Biweekly pay (26 checks a year) is the only cadence this model supports. Each check is dated 14 days after the last.</div>
+          <div class="hint">Biweekly pay is the only cadence this model supports: each check is dated 14 days after the last, giving 26 checks a year (27 when the first payday falls early enough).</div>
           <div class="field"><label>First pay date of the year</label><div class="ctrl cell-blue"><input id="in-firstPayDate" type="date" required></div></div>
           <div class="field" id="field-extraPayday"><label>27-payday year: salary per check</label><div class="ctrl cell-blue">
             <select id="in-extraPayday"><option value="Extra">÷ 26 (27th check is extra)</option><option value="Spread">÷ 27 (same yearly pay)</option></select>
@@ -377,7 +403,7 @@
           <div class="field"><label>Federal withholding method</label><div class="ctrl cell-blue">
             <select id="in-bonusWithholding"><option value="Flat">Flat rate</option><option value="Aggregate">Aggregate</option></select>
           </div></div>
-          <div class="hint">Most employers withhold a separately paid bonus at the flat supplemental rate (22%; set under Tax Year Settings). Aggregate annualizes the bonus as if you were paid that much every period, which withholds much less on a small bonus and more on a large one.</div>
+          <div class="hint">Most employers withhold a separately paid bonus at the flat supplemental rate (22%; set under Tax Year Settings). Aggregate adds the bonus to your most recent regular check, figures withholding on the total as one payment, and subtracts what that check already withheld, so the bonus is withheld at your top bracket rate.</div>
           <div class="field"><label>Bonus NQDC deferral (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusNqdcPct" type="number" step="1" min="0" max="100"></div></div>
           <div class="field"><label>Bonus traditional 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusTradPct" type="number" step="1" min="0" max="100"></div></div>
           <div class="field"><label>Bonus Roth 401(k) (%)</label><div class="ctrl cell-blue pct-wrap"><input id="in-bonusRothPct" type="number" step="1" min="0" max="100"></div></div>
@@ -573,14 +599,15 @@
         <div class="btnrow"><button type="button" id="btn-save-scenario">Save scenario</button></div>
         <ul class="scenario-list" id="scenario-list"></ul>
         <label class="col-toggle" style="margin-top:10px"><input type="checkbox" id="in-autoSave" checked> Auto-save inputs in this browser</label>
-        <p class="hint" style="margin-top:6px">When enabled, inputs save in this browser's local storage. Export a scenario (.json) to keep a backup or turn off auto-save if you share a browser profile (local <code>file://</code> pages can share storage in Chrome).</p>
+        <p class="hint" style="margin-top:6px">When enabled, inputs save in this browser's local storage. Export a scenario (.json) to keep a backup or turn off auto-save if you share a browser profile (local <code>file://</code> pages can share storage in Chrome). Turning it off doesn't delete saved scenarios or a pinned baseline; delete those separately.</p>
       </div>
     </div>
 
     <!-- ============ OUTPUT COLUMN ============ -->
     <div id="outputs">
       <div id="notices"></div>
-      <div id="validation" aria-live="polite"></div>
+      <div id="validation"></div>
+      <div id="validation-status" class="sr-only" role="status"></div>
 
       <div class="panel result">
         <h2>At a Glance</h2>
@@ -1142,6 +1169,9 @@
     // contributions toward purchases this year; hfsa / dcfsa = FSA YTD; sdi =
     // state disability-tax wages YTD (payroll + RSU).
     let prev = { H: 0, M: 0, R: 0, X: 0, Z: 0, AN: 0, AK: null, hsa: 0, fica: 0, supp: 0, espp: 0, hfsa: 0, dcfsa: 0, sdi: 0 };
+    // The most recent regular paycheck (an aggregate-method bonus is withheld
+    // as if paid together with it).
+    let lastPayRow = null;
 
     // Which YTD thresholds were crossed going from totals `a` to `b`.
     function milestonesBetween(a, b) {
@@ -1267,12 +1297,23 @@
       const Z = prev.Z + Y;
 
       // A bonus on the flat method is withheld at the supplemental rate and
-      // ignores the W-4 (including the Step 4(c) extra amount).
+      // ignores the W-4. On the aggregate method (Pub. 15, supplemental wages
+      // paid separately), it's added to the most recent regular check's
+      // wages, withholding is figured on the total as a single payment, and
+      // what the regular check withheld is subtracted. Neither repeats the
+      // Step 4(c) extra amount: it's per pay period, already taken from the
+      // regular check.
       const flatBonus = isBonus && inputs.bonusWithholding !== "Aggregate";
-      const reg = flatBonus ? { AA: 0, AB: 0, AC: suppFedTax(W, prev.supp) } : regularFedWithholding(W);
+      let reg;
+      if (flatBonus) reg = { AA: 0, AB: 0, AC: suppFedTax(W, prev.supp) };
+      else if (isBonus) {
+        const regW = lastPayRow ? lastPayRow.W : 0;
+        const combined = regularFedWithholding(regW + W);
+        reg = { AA: combined.AA, AB: combined.AB, AC: Math.max(0, combined.AC - regularFedWithholding(regW).AC) };
+      } else reg = regularFedWithholding(W);
       const AA = reg.AA, AB = reg.AB;
       const AC = cut("AC", reg.AC);
-      const AD = cut("AD", flatBonus ? 0 : ei.addlFedWithholding);
+      const AD = cut("AD", isBonus ? 0 : ei.addlFedWithholding);
 
       const ficaBefore = prev.fica, ficaAfter = prev.fica + Y;
       const AE = Math.max(0, Math.min(ficaAfter, tax.ssWageBase) - Math.min(ficaBefore, tax.ssWageBase)) * tax.ssRate;
@@ -1332,6 +1373,7 @@
       const next = row.next;
       delete row.next;
       rows.push(row);
+      if (row.kind === "pay") lastPayRow = row;
       commit(row, next);
     }
 
@@ -1568,6 +1610,17 @@
   /* Input validation (pure: returns messages, never throws)                 */
   /* ---------------------------------------------------------------------- */
 
+  // The ESPP offering period setup the engine needs once ESPP is in use, or
+  // null when it's fine. (Without it, computeAll() would silently fall back
+  // to Jan 1 and 1-month periods.)
+  function esppSetupProblem(inp) {
+    if (!parseISODate(inp.esppStart)) return { id: "in-esppStart", msg: "Enter the ESPP offering period start date (or set ESPP to 0% all year)." };
+    if (!(inp.esppMonths >= 1 && inp.esppMonths <= 27 && Number.isInteger(inp.esppMonths))) {
+      return { id: "in-esppMonths", msg: "ESPP offering period length must be a whole number of months, 1 to 27 (the §423 maximum)." };
+    }
+    return null;
+  }
+
   // Errors block the calculation (results are dimmed until fixed); warnings
   // don't. Each message names the element id to focus when clicked.
   function validateInputs(inp, tax) {
@@ -1671,11 +1724,11 @@
 
     const fp = parseISODate(inp.firstPayDate);
     if (!fp) err("in-firstPayDate", "Enter the first pay date of the year.");
-    if (inp.esppPct > 0) {
-      if (!parseISODate(inp.esppStart)) err("in-esppStart", "Enter the ESPP offering period start date (or set ESPP to 0%).");
-      if (!(inp.esppMonths >= 1 && inp.esppMonths <= 27 && Number.isInteger(inp.esppMonths))) {
-        err("in-esppMonths", "ESPP offering period length must be a whole number of months, 1 to 27 (the §423 maximum).");
-      }
+    // ESPP in use at any point in the year (the base election or a mid-year change).
+    const esppUsed = inp.esppPct > 0 || (inp.changes || []).some(c => c.field === "esppPct" && c.value > 0);
+    if (esppUsed) {
+      const esppProblem = esppSetupProblem(inp);
+      if (esppProblem) err(esppProblem.id, esppProblem.msg);
     }
     if (inp.esppDiscount > 0.15 + 1e-9) err("in-esppDiscount", "A §423 ESPP can't discount the purchase price more than 15%.");
     if (!(inp.plan401kMaxPct > 0)) err("in-plan401kMaxPct", "The 401(k) plan maximum must be more than 0%.");
@@ -1926,6 +1979,8 @@
             achieved: res => res.summary.limit415c - res.summary.room415cRemaining };
         }
         case "espp": {
+          const setup = esppSetupProblem(cur);
+          if (setup) return { na: "Enter the ESPP offering period start date and length (1 to 27 months) first." };
           // Most that can go in: each offering period's cap (or what a period
           // that's entirely in the past already got), with periods purchased
           // this year also bound by the IRS limit.
@@ -2063,6 +2118,7 @@
 
   const STORAGE_KEY = "paycheckCalc.state.v1";
   const AUTO_SAVE_KEY = "paycheckCalc.noSave";
+  const BACKUP_KEY = "paycheckCalc.state.unreadable"; // a save that couldn't be loaded, kept for download
   const SCHEMA_VERSION = 1;
   let state = { inputs: defaultInputs(), tax: defaultTaxTables() };
 
@@ -2079,6 +2135,7 @@
         if (saveTimer !== null) { clearTimeout(saveTimer); saveTimer = null; }
         localStorage.setItem(AUTO_SAVE_KEY, "1");
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(BACKUP_KEY);
       }
     } catch (e) { /* ignore */ }
   }
@@ -2155,6 +2212,10 @@
     if (!["Auto", "Yes", "No"].includes(inputs.catchupRoth)) inputs.catchupRoth = di.catchupRoth;
     if (!["Flat", "Aggregate"].includes(inputs.bonusWithholding)) inputs.bonusWithholding = di.bonusWithholding;
     if (!["Extra", "Spread"].includes(inputs.extraPayday)) inputs.extraPayday = di.extraPayday;
+    // Election steps are dropdowns: anything else would show as a blank choice.
+    const oneOf = (v, opts) => opts.some(o => Math.abs(v - o) < 1e-9);
+    if (!oneOf(inputs.plan401kStep, [0.01, 0.001, 0.0001])) inputs.plan401kStep = di.plan401kStep;
+    if (!oneOf(inputs.esppStep, [0.01, 0.001])) inputs.esppStep = di.esppStep;
     if (!(inputs.filingStatus in tax.brackets) || !(inputs.filingStatus in tax.standardDeduction)) inputs.filingStatus = di.filingStatus;
     if (!(inputs.hsaCoverage in tax.hsaLimit)) inputs.hsaCoverage = di.hsaCoverage;
     const numArray = (a, n) => Array.isArray(a) && a.length === n && a.every(isNum);
@@ -2373,6 +2434,32 @@
   }
   function round4(n) { return Math.round(n * 10000) / 10000; }
 
+  // Number fields left blank, or holding something that isn't a number. The
+  // model reads them as 0 meanwhile, but they're reported as errors (so the
+  // results go stale) until each has a value, instead of silently using $0.
+  const blankFields = new Map(); // element id → "blank" | "bad"
+  function trackBlank(el) {
+    const v = el.value.trim();
+    const bad = (el.validity && el.validity.badInput)
+      || (el.dataset.money && v !== "" && !/^-?(\d+\.?\d*|\.\d+)$/.test(v.replace(/[$,\s]/g, "")));
+    if (bad) blankFields.set(el.id, "bad");
+    else if (v === "") blankFields.set(el.id, "blank");
+    else blankFields.delete(el.id);
+  }
+  function clearBlank(prefix) {
+    for (const id of [...blankFields.keys()]) if (!prefix || id.startsWith(prefix)) blankFields.delete(id);
+  }
+  function blankFieldErrors() {
+    const out = [];
+    for (const [id, why] of blankFields) {
+      const el = document.getElementById(id);
+      if (!el || el.closest("[hidden]")) continue; // hidden fields aren't used
+      const label = ((el.labels && el.labels[0] && el.labels[0].textContent) || el.getAttribute("aria-label") || "A number field").trim();
+      out.push({ id, msg: `${label}: ${why === "bad" ? "enter a number" : "enter a value (0 if none)"}.` });
+    }
+    return out;
+  }
+
   function populateScalarBindings(list, target) {
     for (const b of list) {
       const el = document.getElementById(b.id);
@@ -2381,6 +2468,7 @@
       // .oninput (not addEventListener) so re-calling populateAllControls() — e.g. on
       // "Reset to example" — replaces the handler instead of stacking a duplicate on it.
       el.oninput = () => {
+        if (el.tagName === "INPUT" && el.type !== "date") trackBlank(el);
         setVal(target, b.key, readControl(el, b.kind));
         recalcAndRender();
       };
@@ -2410,6 +2498,7 @@
   function buildListTable({ tableId, list, prefix, noun, fields, emptyText, rebuild }) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = "";
+    clearBlank(`${prefix}-`);
     list.forEach((item, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML = fields.map(f => f.kind === "label"
@@ -2421,6 +2510,7 @@
       fields.filter(f => f.kind !== "label").forEach(f => {
         const inp = tr.querySelector(`#${prefix}-${i}-${f.key}`);
         inp.oninput = () => {
+          if (f.kind !== "date") trackBlank(inp);
           item[f.key] = f.kind === "date" ? inp.value : f.money ? parseMoney(inp.value) : (parseFloat(inp.value) || 0);
           recalcAndRender();
         };
@@ -2485,10 +2575,17 @@
   function changePctStep(field) {
     return round4((field === "esppPct" ? (state.inputs.esppStep || 0.01) : (state.inputs.plan401kStep || 0.01)) * 100);
   }
+  // Changes are listed by date (undated last). Sorting happens only when the
+  // table is rebuilt anyway, or when focus leaves the table for another
+  // control (wireControls), never mid-edit, so it can't drop focus or a click.
+  const changeDateKey = c => c.date || "9999";
+  const changesSorted = list => list.every((c, i) => i === 0 || changeDateKey(list[i - 1]) <= changeDateKey(c));
   function buildChangesTable() {
     const list = state.inputs.changes;
+    if (!changesSorted(list)) list.sort((a, b) => changeDateKey(a).localeCompare(changeDateKey(b)));
     const tbody = document.querySelector("#changes-table tbody");
     tbody.innerHTML = "";
+    clearBlank("chg-");
     const fieldOptions = sel => Object.entries(CHANGEABLE).map(([k, d]) =>
       `<option value="${k}"${k === sel ? " selected" : ""}>${escapeHTML(d.label)}</option>`).join("");
     list.forEach((c, i) => {
@@ -2502,17 +2599,6 @@
         <td><button type="button" class="remove" aria-label="Remove change ${i + 1}">✕</button></td>`;
       const dateInp = tr.querySelector(`#chg-${i}-date`);
       dateInp.oninput = e => { c.date = e.target.value; recalcAndRender(); };
-      dateInp.onblur = () => {
-        // Sort chronologically only once the user leaves the date input so
-        // typing a year never rebuilds the table or jumps the cursor mid-edit.
-        const beforeOrder = list.slice();
-        list.sort((a, b) => (a.date || "9999").localeCompare(b.date || "9999"));
-        if (list.some((x, idx) => x !== beforeOrder[idx])) {
-          buildChangesTable();
-          recalcAndRenderNow();
-          flushSaveState();
-        }
-      };
       tr.querySelector(`#chg-${i}-field`).onchange = e => {
         // Start the new election at its value on that date without this change.
         c.field = e.target.value;
@@ -2521,9 +2607,10 @@
         pushHistory();
         recalcAndRenderNow();
         flushSaveState();
-        document.getElementById(`chg-${i}-value`).focus();
+        document.getElementById(`chg-${list.indexOf(c)}-value`).focus();
       };
       tr.querySelector(`#chg-${i}-value`).oninput = e => {
+        trackBlank(e.target);
         c.value = pct ? (parseFloat(e.target.value) || 0) / 100 : parseMoney(e.target.value);
         recalcAndRender();
       };
@@ -2551,8 +2638,10 @@
     pushHistory();
     recalcAndRenderNow();
     flushSaveState();
-    const inputs = document.querySelectorAll(`#${tableId} tbody tr:last-child input`);
-    if (inputs.length) inputs[0].focus();
+    // The new row (a sorted table may not put it last).
+    const row = document.querySelectorAll(`#${tableId} tbody tr`)[list.indexOf(item)];
+    const first = row && row.querySelector("input");
+    if (first) first.focus();
   }
 
   function buildMatchTable() {
@@ -2568,6 +2657,7 @@
     });
     tbody.querySelectorAll("input").forEach(inp => {
       inp.addEventListener("input", () => {
+        trackBlank(inp);
         const idx = parseInt(inp.dataset.matchIdx, 10);
         const field = inp.dataset.field;
         if (field === "width") state.inputs.matchBracketWidths[idx] = parseFloat(inp.value) || 0;
@@ -2577,7 +2667,7 @@
     });
     const rate4 = document.getElementById("in-matchRate4");
     rate4.value = round4(state.inputs.matchRates[3] * 100);
-    rate4.oninput = () => { state.inputs.matchRates[3] = (parseFloat(rate4.value) || 0) / 100; recalcAndRender(); };
+    rate4.oninput = () => { trackBlank(rate4); state.inputs.matchRates[3] = (parseFloat(rate4.value) || 0) / 100; recalcAndRender(); };
   }
 
   const FILING_STATUSES = ["Single", "Married Filing Jointly", "Head of Household", "Married Filing Separately"];
@@ -2616,6 +2706,7 @@
     }
     container.querySelectorAll("input").forEach(inp => {
       inp.addEventListener("input", () => {
+        trackBlank(inp);
         const status = inp.dataset.status, idx = parseInt(inp.dataset.idx, 10), field = inp.dataset.field;
         const b = state.tax.brackets[status][idx];
         if (field === "rate") b.rate = (parseFloat(inp.value) || 0) / 100;
@@ -2730,6 +2821,7 @@
       item("Take-home", fmtUSD0(s.netPay)) + item("Typical check", fmtUSD0(s.medianRegularNet))
       + item("Saved", fmtUSD0(s.savedTotal)) + item("Tax rate", fmtPct1(s.effRateAllSources))
       + item("At filing", due > 50 ? `owe ${fmtUSD0(due)}` : due < -50 ? `refund ${fmtUSD0(-due)}` : "about even")
+      + `<span class="sb-stale">Out of date until the flagged inputs are fixed</span>`
       + `<button type="button" data-action="to-glance">Details ↑</button>`;
   }
   function watchSummaryBar() {
@@ -2737,7 +2829,9 @@
     const glance = document.getElementById("kpis").closest(".panel");
     if (!("IntersectionObserver" in window)) return;
     new IntersectionObserver(entries => {
-      const show = !entries[0].isIntersecting && !!lastResult;
+      // Shown once there are results; while inputs have errors it stays, dimmed
+      // and marked out of date (see recalcAndRenderNow), like the outputs.
+      const show = !entries[0].isIntersecting && bar.childElementCount > 0;
       bar.hidden = !show;
       document.body.classList.toggle("has-summary-bar", show);
     }).observe(glance);
@@ -3663,7 +3757,9 @@
   let history = [];      // serialized JSON snapshots for multi-level Undo/Redo
   let historyIdx = -1;
   let historyTimer = null;
-  function flash(kind, html) { flashNotices.push({ kind, html }); renderNotices(); }
+  // extra: optional { actions: [{ label, action }], ... } (buttons on the notice;
+  // their click handlers find the notice through data-notice).
+  function flash(kind, html, extra) { flashNotices.push({ kind, html, ...extra }); renderNotices(); }
   function snapshot() { return JSON.parse(JSON.stringify(state)); }
   function syncUndoButtons() {
     const u = document.getElementById("btn-undo"), r = document.getElementById("btn-redo");
@@ -3709,9 +3805,26 @@
   // recording both before & after in history for one-click Undo.
   function replaceState(next, message) {
     pushHistory();
+    const before = history[historyIdx];
     state = next;
     pushHistory();
-    flashNotices = [{ kind: "info", html: `${message} <button type="button" data-action="undo">Undo</button>` }];
+    flashNotices = [{ kind: "info", html: message, actions: [{ label: "Undo", action: "undo" }],
+      undo: { before, after: history[historyIdx] } }];
+    populateAllControls();
+    recalcAndRenderNow();
+    flushSaveState();
+  }
+  // A notice's Undo: back to the state before the action it describes. With
+  // no edits since, that's a plain Undo; otherwise it's a new step (dropping
+  // the later edits too), so Undo brings them back.
+  function undoNotice(n) {
+    if (historyTimer !== null) pushHistory();
+    if (history[historyIdx] === n.undo.after && history[historyIdx - 1] === n.undo.before
+      && JSON.stringify(state) === n.undo.after) { undoEdit(); return; }
+    pushHistory();
+    state = JSON.parse(n.undo.before);
+    pushHistory();
+    flashNotices = [{ kind: "info", html: "Went back to before that change, including the edits you made since. Use Undo to bring those edits back." }];
     populateAllControls();
     recalcAndRenderNow();
     flushSaveState();
@@ -3777,7 +3890,9 @@
         <div class="btnrow"><button type="button" class="primary" data-action="update-year">Update to ${TAX_YEAR}</button><button type="button" data-action="keep-year">Keep my figures</button></div></div>`);
     }
     flashNotices.forEach((n, i) => parts.push(
-      `<div class="notice ${n.kind === "info" ? "" : n.kind}" role="status"><button type="button" class="dismiss" data-dismiss="${i}" aria-label="Dismiss">×</button>${n.html}</div>`));
+      `<div class="notice ${n.kind === "info" ? "" : n.kind}" role="status"><button type="button" class="dismiss" data-dismiss="${i}" aria-label="Dismiss">×</button>${n.html}`
+      + (n.actions || []).map(a => ` <button type="button" data-action="${a.action}" data-notice="${i}">${escapeHTML(a.label)}</button>`).join("")
+      + `</div>`));
     setHTML("notices", parts.join(""));
   }
 
@@ -3785,21 +3900,40 @@
     const item = m => `<li>${m.id ? `<a href="#${m.id}" data-focus="${m.id}">${escapeHTML(m.msg)}</a>` : escapeHTML(m.msg)}</li>`;
     let html = "";
     if (v.errors.length) {
-      html += `<div class="notice error" role="alert"><div class="notice-title">⛔ Fix ${v.errors.length === 1 ? "this" : "these"} to update the results:</div><ul>${v.errors.map(item).join("")}</ul></div>`;
+      html += `<div class="notice error"><div class="notice-title">⛔ Fix ${v.errors.length === 1 ? "this" : "these"} to update the results:</div><ul>${v.errors.map(item).join("")}</ul></div>`;
     }
     if (v.warnings.length) {
       html += `<div class="notice warn"><div class="notice-title">⚠ Check ${v.warnings.length === 1 ? "this" : "these"}:</div><ul>${v.warnings.map(item).join("")}</ul></div>`;
     }
     setHTML("validation", html);
+    announceValidation(v);
     document.querySelectorAll('[aria-invalid="true"]').forEach(el => el.removeAttribute("aria-invalid"));
     document.querySelectorAll(".has-warning").forEach(el => el.classList.remove("has-warning"));
     v.warnings.forEach(m => { const el = m.id && document.getElementById(m.id); if (el) el.classList.add("has-warning"); });
     v.errors.forEach(m => { const el = m.id && document.getElementById(m.id); if (el) el.setAttribute("aria-invalid", "true"); });
   }
 
+  // The validation banner isn't a live region (its messages include amounts
+  // that change as you type); screen readers get just the counts, when they
+  // change and typing pauses.
+  let validationSummary = "", validationTimer = null;
+  function announceValidation(v) {
+    const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+    const parts = [];
+    if (v.errors.length) parts.push(`${plural(v.errors.length, "input problem")} to fix before the results update`);
+    if (v.warnings.length) parts.push(`${plural(v.warnings.length, "warning")} to check`);
+    const text = parts.length ? parts.join("; ") + "." : validationSummary ? "No input problems." : "";
+    if (text === validationSummary) return;
+    validationSummary = parts.length ? text : "";
+    clearTimeout(validationTimer);
+    validationTimer = setTimeout(() => { document.getElementById("validation-status").textContent = text; }, 600);
+  }
+
   function focusField(id) {
-    const el = document.getElementById(id);
+    let el = document.getElementById(id);
     if (!el) return;
+    // A <details> itself can't take focus; its <summary> can.
+    if (el.tagName === "DETAILS") { el.open = true; el = el.querySelector(":scope > summary") || el; }
     for (let p = el; p; p = p.parentElement) {
       if (p.tagName === "DETAILS") p.open = true;
       if (p.classList && p.classList.contains("collapsed")) {
@@ -3841,7 +3975,9 @@
     const catchLim = catchupLimit(inp.employeeAge, tax);
     const hsaRoom = Math.max(0, hsaLimitFor(inp, tax) - inp.employerHsaAnnual);
     v("mx-k401-hint").textContent = `Reach the ${fmtUSD0(tax.electiveLimit)} limit${catchLim ? ` plus ${fmtUSD0(catchLim)} catch-up` : ""}. Now ${fmtUSD0(s.totalTradRoth + s.totalCatchup)}.`;
-    v("mx-afterTax-hint").textContent = `Fill the rest of the ${fmtUSD0(tax.limit415c)} §415(c) limit after your 401(k) and match. Now ${fmtUSD0(tax.limit415c - s.room415cRemaining)}. Only if your plan allows after-tax contributions.`;
+    // s.limit415c is the effective limit: the dollar limit, or 100% of pay if lower.
+    const lim415Note = s.limit415c < tax.limit415c - EPS ? " (100% of your pay, which is under the dollar limit)" : "";
+    v("mx-afterTax-hint").textContent = `Fill the rest of the ${fmtUSD0(s.limit415c)} §415(c) limit${lim415Note} after your 401(k) and match. Now ${fmtUSD0(s.limit415c - s.room415cRemaining)}. Only if your plan allows after-tax contributions.`;
     v("mx-hsa-hint").textContent = hsaRoom > EPS
       ? `Reach the ${fmtUSD0(hsaLimitFor(inp, tax))} limit${inp.employerHsaAnnual ? ` (${fmtUSD0(hsaRoom)} after the employer's)` : ""}. Now ${fmtUSD0(s.hsaAnnual + inp.employerHsaAnnual)}. Only with an HSA-eligible health plan.`
       : "The employer contribution already fills the HSA limit.";
@@ -4077,6 +4213,7 @@
     renderNotices();
     renderHints();
     const v = validateInputs(state.inputs, state.tax);
+    v.errors.unshift(...blankFieldErrors());
     let result = null;
     if (!v.errors.length) {
       try {
@@ -4101,6 +4238,7 @@
     lastResult = result;
     // Errors leave the previous results in place, dimmed, until fixed.
     document.getElementById("outputs").classList.toggle("is-stale", !result);
+    document.getElementById("summary-bar").classList.toggle("is-stale", !result);
     document.getElementById("btn-maximize").disabled = !result;
   }
 
@@ -4117,6 +4255,7 @@
   }
 
   function populateAllControls() {
+    clearBlank(); // every control is refilled from state
     populateScalarBindings(SCALAR_BINDINGS, state.inputs);
     populateScalarBindings(TAX_SCALAR_BINDINGS, state.tax);
     buildRSUInputTable();
@@ -4152,7 +4291,8 @@
       setAutoSaveEnabled(autoSaveEl.checked);
       flash("info", autoSaveEl.checked
         ? "Auto-save turned on. Your inputs will be saved in this browser."
-        : "Auto-save turned off and saved inputs cleared from this browser.");
+        : `Auto-save turned off and saved inputs cleared from this browser.${loadScenarios().length || baseline
+          ? " Saved scenarios and the pinned baseline stay until you delete them (Scenario panel ✕, Clear baseline)." : ""}`);
     });
     on("btn-reset", () => replaceState({ inputs: defaultInputs(), tax: defaultTaxTables() }, "Reset to the built-in example."));
     on("btn-export", () => {
@@ -4195,6 +4335,15 @@
     dlg.addEventListener("keydown", e => {
       if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "checkbox" && e.target.type !== "radio") e.preventDefault();
     });
+    // Re-sort the changes once focus moves on to a control outside the table.
+    // (Not when relatedTarget is null, e.g. a click that doesn't move focus:
+    // rebuilding then could swallow the click; the next rebuild sorts.)
+    document.getElementById("changes-table").addEventListener("focusout", e => {
+      if (!e.relatedTarget || e.currentTarget.contains(e.relatedTarget) || changesSorted(state.inputs.changes)) return;
+      buildChangesTable();
+      recalcAndRenderNow();
+      flushSaveState();
+    });
     on("btn-add-change", () => {
       // The next payday if the year is under way, else a mid-year payday.
       const pays = lastResult ? lastResult.rows.filter(r => r.kind === "pay") : [];
@@ -4229,6 +4378,7 @@
         let next;
         try { next = normalizeState(sc.state); } catch (err) { flash("error", `Couldn't load “${escapeHTML(sc.name)}”: ${escapeHTML(err.message)}`); return; }
         replaceState(next, `Loaded “${escapeHTML(sc.name)}”.`);
+        if (isNewerSchema(sc.state)) flash("warn", `“${escapeHTML(sc.name)}” was saved by a newer version of this calculator; some settings may not be supported here.`);
       } else if (act === "compare") {
         compareWith = sc.name;
         renderScenarios();
@@ -4238,9 +4388,14 @@
         downloadFile(`paycheck-scenario-${sc.name.replace(/[^\w-]+/g, "-")}.json`, "application/json",
           JSON.stringify({ app: "paycheck-calculator", name: sc.name, savedAt: new Date(sc.savedAt).toISOString(), ...sc.state }, null, 2) + "\n");
       } else if (act === "delete") {
-        storeScenarios(list.filter((_, i) => i !== parseInt(b.dataset.i, 10)));
+        const idx = parseInt(b.dataset.i, 10);
+        if (!storeScenarios(list.filter((_, i) => i !== idx))) { flash("error", "Couldn't delete: this browser's storage is turned off."); return; }
         renderScenarios();
         if (lastResult) renderComparison(lastResult);
+        flash("info", `Deleted “${escapeHTML(sc.name)}”.`, { actions: [{ label: "Undo", action: "restore-scenario" }], scenario: { sc, idx } });
+        // The clicked button is gone: keep focus in the list.
+        const dels = document.querySelectorAll('#scenario-list [data-scenario="delete"]');
+        (dels[Math.min(idx, dels.length - 1)] || document.getElementById("btn-save-scenario")).focus();
       }
     });
     document.getElementById("sel-compare").addEventListener("change", e => {
@@ -4291,7 +4446,27 @@
       if (act === "to-glance") {
         document.getElementById("kpis").closest(".panel").scrollIntoView({ behavior: "smooth" });
       } else if (act === "undo") {
-        undoEdit();
+        const n = flashNotices[parseInt(action.dataset.notice, 10)];
+        if (n && n.undo) undoNotice(n); else undoEdit();
+      } else if (act === "download-backup") {
+        let raw = null;
+        try { raw = localStorage.getItem(BACKUP_KEY); } catch (err) { /* ignore */ }
+        if (raw) downloadFile("paycheck-unreadable-save.json", "application/json", raw);
+        else flash("error", "The old save is no longer in this browser.");
+      } else if (act === "restore-scenario") {
+        const i = parseInt(action.dataset.notice, 10), n = flashNotices[i];
+        if (!n || !n.scenario) return;
+        flashNotices.splice(i, 1);
+        const list = loadScenarios(), { sc, idx } = n.scenario;
+        if (list.some(x => x.name === sc.name)) {
+          flash("error", `Couldn't restore “${escapeHTML(sc.name)}”: a scenario with that name has been saved since.`);
+          return;
+        }
+        list.splice(Math.min(idx, list.length), 0, sc);
+        if (!storeScenarios(list)) { flash("error", "Couldn't restore: this browser's storage is full or turned off."); return; }
+        renderScenarios();
+        if (lastResult) renderComparison(lastResult);
+        flash("info", `Restored “${escapeHTML(sc.name)}”.`);
       } else if (act === "update-year") {
         const prevState = snapshot();
         updateToCurrentTaxYear();
@@ -4343,11 +4518,19 @@
     } catch (e) { /* ignore */ }
 
     // A corrupt or incompatible save must never leave the page dead: fall
-    // back to the example and say so.
+    // back to the example and say so. The old save is copied aside first
+    // (the example then replaces it), so it can still be downloaded.
+    let rawSave = null;
+    try { rawSave = isAutoSaveEnabled() ? localStorage.getItem(STORAGE_KEY) : null; } catch (e) { /* ignore */ }
     const startOver = e => {
       console.error(e);
+      let kept = false;
+      if (rawSave) { try { localStorage.setItem(BACKUP_KEY, rawSave); kept = true; } catch (err) { /* ignore */ } }
       state = { inputs: defaultInputs(), tax: defaultTaxTables() };
-      flashNotices = [{ kind: "error", html: `Your saved inputs couldn't be loaded, so the page started from the built-in example. (${escapeHTML(e.message)})` }];
+      flashNotices = [{ kind: "error",
+        html: `Your saved inputs couldn't be loaded, so the page started from the built-in example. (${escapeHTML(e.message)})`
+          + (kept ? " A copy of the old save was kept in this browser." : ""),
+        actions: kept ? [{ label: "Download the old save", action: "download-backup" }] : [] }];
       populateAllControls();
       pushHistory();
       recalcAndRenderNow();
